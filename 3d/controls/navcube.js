@@ -7,7 +7,7 @@ V3.NavCube = class extends V.EventHandler
         
         this.camera = new GM.CameraMVP({ width: V3.NavCube.VIEWPORT, height: V3.NavCube.VIEWPORT}, new GM.PerspectiveProjection(30));
         
-        this.navTextureMap = new GL.Texture(new GL.ImageLoader("/3d/controls/navcube.png", { notify: V.touch3d }));
+        this.navTextureMap = new GL.Texture(new GL.ImageLoader("https://voxxlr.github.io/doc/3d/controls/navcube.png", { notify: V.touch3d }));
 
         this.navIndex = new GL.ElementBuffer(new Uint16Array([0,1,2, //z-
                                                               0,2,3,
