@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <link rel="shortcut icon" href="data:image/x-icon;," type="image/x-icon"> 
+    <meta charset="UTF-8"/>
+    <title>Voxxlr Viewer</title>
+    <link rel="canonical" href="https://www.voxxlr.com/index.html">
+     
+    <script>
+    
+        window.addEventListener("load", () => 
+        {
+            document.addEventListener('contextmenu', event => event.preventDefault());
+            
+            var config = {{{content}}};
+            
+            var viewer = new V3.Viewer(config);
+            if (config != null)
+            {
+                if (config.type == "model")
+                {
+                    viewer.load(config.id, new M.Model(config, V.viewerCb));
+                }
+                else if (config.type == "cloud")
+                {
+                    viewer.load(config.id, new M.Cloud(config, V.viewerCb));
+                }
+            }
+       });
+        
+    </script>
+        
+    <style>
+    
+        body { overflow: hidden;  touch-action: none; }
+        canvas { position: absolute; top: 0px; left: 0px; width:100%; height:100% }
+        
+    </style>
+  
+</head>
+<body>
+
+    <canvas id="canvas3D"></canvas>
+    <canvas id="canvas2D" class="events"></canvas> 
+   
+</body>
+ 
+ -->
+{{{geom/geom.js}}}
+{{{gl/gl.js}}}
+{{{gl/shader.js}}}
+{{{gl/object.js}}}
+
+{{{index.js}}}
+
+{{{overlay/overlay.js}}}
+{{{overlay/anchor.js}}}
+{{{overlay/component.js}}}
+{{{overlay/geometry.js}}}
+
+{{{overlay/elevation.js}}}
+{{{overlay/line.js}}}
+{{{overlay/polygon.js}}}
+{{{overlay/point.js}}}
+    
+{{{3d/index.js}}}
+{{{3d/camera.js}}}
+{{{3d/controls/navcube.js}}}
+{{{3d/controls/target.js}}}
+{{{3d/controls/transform.js}}}
+{{{3d/cloud/cloud.js}}}
+{{{3d/cloud/shader.js}}}
+{{{3d/model/model.js}}}
+{{{3d/model/shader.js}}}
+{{{3d/overlay/polygon.js}}}
+{{{3d/overlay/line.js}}}
+ -->
+
+<!--FILES
+geom/geom.js
+gl/gl.js
+gl/shader.js
+gl/object.js
+index.js
+overlay/overlay.js
+overlay/anchor.js
+overlay/component.js
+overlay/geometry.js
+overlay/elevation.js
+overlay/line.js
+overlay/polygon.js
+overlay/point.js
+3d/index.js
+3d/camera.js
+3d/controls/navcube.js
+3d/controls/target.js
+3d/controls/transform.js
+3d/cloud/cloud.js
+3d/cloud/shader.js
+3d/model/model.js
+3d/model/shader.js
+3d/overlay/polygon.js
+3d/overlay/line.js
+-->
+
+</html>
+
