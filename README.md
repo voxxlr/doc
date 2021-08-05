@@ -8,7 +8,7 @@ Voxxlr is a cloud platform to develop and host web applications around geospatia
 | app      | The app SDK provides high level components to manage multiple datasets and develop apps.   |
 | cloud    | The cloud SDK provides software to process geospatial datasets on linux or windows  |
 
-You can fully host the Voxxlr cloud platform on your own infrastructure or integrate seamlessly with the hosted version at www.voxxlr.com
+You can fully host the cloud platform on your own infrastructure or integrate seamlessly with the hosted version at Voxxlr.
 
 ## Installation
 After cloning this repo run 
@@ -56,7 +56,7 @@ generates three version of each html file
 The _doc_ SDK is designed to be loaded into an iframe and controlled via a message API. The source of the iframe must be one of the index.html files created during the build process. An initial dataset can either be loaded with the index file by replacing the _{{{content}}}_ mustache tag with a json object describing a document or, after the iframe has loaded, by sending a message  containing the root object. 
 
 
-For a documentation of the messaging API and a interactive fiddles visit www.voxxlr.com/api.html
+For a documentation of the messaging API and a interactive fiddles visit https://www.voxxlr.com/api.html
 
 
 ## License
