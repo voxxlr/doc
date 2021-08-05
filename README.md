@@ -8,7 +8,15 @@ Voxxlr is a cloud platform to develop and host web applications around geospatia
 | app      | The app SDK provides high level components to manage multiple datasets and develop apps.   |
 | cloud    | The cloud SDK provides software to process geospatial datasets on linux or windows  |
 
-You can fully host the cloud platform on your own infrastructure or integrate seamlessly with the hosted version at Voxxlr.
+You can fully host the cloud platform on your own infrastructure or integrate seamlessly with the hosted version at https://www.voxxlr.com. Follow the links below for a few sample Apps developed with Voxxlr.
+
+| Link        | Description |
+| :---        |    :----   |
+| https://app.voxxlr.com/1624016067425   | BIM Viewer  |
+| https://app.voxxlr.com/1620825035265   | Inspector App  |
+| https://app.voxxlr.com/1623155297253   | Volumetric App  |
+
+
 
 ## Installation
 After cloning this repo run 
