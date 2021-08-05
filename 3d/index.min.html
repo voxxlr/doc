@@ -45,37 +45,6 @@
    
 </body>
  
- -->
-{{{geom/geom.js}}}
-{{{gl/gl.js}}}
-{{{gl/shader.js}}}
-{{{gl/object.js}}}
-
-{{{index.js}}}
-
-{{{overlay/overlay.js}}}
-{{{overlay/anchor.js}}}
-{{{overlay/component.js}}}
-{{{overlay/geometry.js}}}
-
-{{{overlay/elevation.js}}}
-{{{overlay/line.js}}}
-{{{overlay/polygon.js}}}
-{{{overlay/point.js}}}
-    
-{{{3d/index.js}}}
-{{{3d/camera.js}}}
-{{{3d/controls/navcube.js}}}
-{{{3d/controls/target.js}}}
-{{{3d/controls/transform.js}}}
-{{{3d/cloud/cloud.js}}}
-{{{3d/cloud/shader.js}}}
-{{{3d/model/model.js}}}
-{{{3d/model/shader.js}}}
-{{{3d/overlay/polygon.js}}}
-{{{3d/overlay/line.js}}}
- -->
-
 <script id="geom/geom.js">GM={DEG2RAD:Math.PI/180,RAD2DEG:180/Math.PI,clamp:function(a,b,c){return Math.max(b,Math.min(c,a))}};
 GM.Vector3=class{constructor(a,b,c){this.x=a||0;this.y=b||0;this.z=c||0}clone(){return new GM.Vector3(this.x,this.y,this.z)}copy(a){this.x=a.x;this.y=a.y;this.z=a.z;return this}set(a,b,c){this.x=a;this.y=b;this.z=c;return this}readArray(a,b){this.x=a[b];this.y=a[b+1];this.z=a[b+2];return this}add(a){this.x+=a.x;this.y+=a.y;this.z+=a.z;return this}sub(a){this.x-=a.x;this.y-=a.y;this.z-=a.z;return this}multiply(a){this.x*=a.x;this.y*=a.y;this.z*=a.z;return this}addScaledVector(a,b){this.x+=a.x*b;this.y+=
 a.y*b;this.z+=a.z*b;return this}crossVectors(a,b){var c=a.x,d=a.y;a=a.z;var e=b.x,f=b.y;b=b.z;this.x=d*b-a*f;this.y=a*e-c*b;this.z=c*f-d*e;return this}subVectors(a,b){this.x=a.x-b.x;this.y=a.y-b.y;this.z=a.z-b.z;return this}multiplyScalar(a){isFinite(a)?(this.x*=a,this.y*=a,this.z*=a):this.z=this.y=this.x=0;return this}multiplyVectors(a,b){this.x=a.x*b.x;this.y=a.y*b.y;this.z=a.z*b.z;return this}applyMatrix3(a){var b=this.x,c=this.y,d=this.z;a=a.elements;this.x=a[0]*b+a[3]*c+a[6]*d;this.y=a[1]*b+

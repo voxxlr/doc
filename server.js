@@ -50,7 +50,7 @@ const server = http.createServer(async (req, res) =>
 {
     res.statusCode = 200;
     res.setHeader('Content-Type', 'text/html');
-    
+
     try 
     {
         let token;
@@ -60,30 +60,43 @@ const server = http.createServer(async (req, res) =>
         {
             case "/model":
                 token = "qGs+QOpsIjVvPKU2RQ4aBw==.eyJpIjoxNjAyNDQxNzA2Nzg0LCJ1IjoiaHR0cHM6Ly9zdG9yYWdlLmdvb2dsZWFwaXMuY29tL3ZveHhsci0xNTA2NjA4MTEwMzYwLzE2MDI0NDE3MDY3ODQvJXM/YmVhcmVyX3Rva2VuPXlhMjkuYy5LcDhCQ1FqQVlibzIzNjZXMkdjOUUxb1hhQjJtQU84bXVYYnJYblhZdnVSUk9rRy1BczJvejFyTV94XzNFYW9aa1RxakFyMGgteGhZaFcydVd6NnpMd0dXYmJOWlhwSEpvXzh6U0RtbmNoQ25JMGZ6ek10b1dxZjJUZmlVbWNJMGN4RjlNZkd5Rk53d2VBVi1ON2xUbWtqaDB0ZFNYWWMxeDZ0dGNVUUYzUGFlZ0VGQmFFRF9HckhYZk1wWEcxNV91TlBwUUdpQmNBcHZUdHgtSHk2bGlVakQiLCJwIjoiUiIsIm0iOjE2Mjc0ODEyMjksInQiOjQsInYiOjN9";
-                file = './3d/index.min.html';
+                file = './3d/index.dev.html';
                 break;
             case "/map":
                 token = "qOz+1zJf3Dk0G5v+QdX4Ag==.eyJpIjoxNjEwMzIxOTQ4OTYxLCJ1IjoiaHR0cHM6Ly9zdG9yYWdlLmdvb2dsZWFwaXMuY29tL3ZveHhsci0xNTA2NjA4MTEwMzYwLzE2MTAzMjE5NDg5NjEvcm9vdC9QQVRIL0ZJTEUuVFlQRT9iZWFyZXJfdG9rZW49eWEyOS5jLktwOEJDUWd0U3FuU0hlY29zWUdIUWhON2lGZVJNYVRtd3FaVUNkZjZmMGRobmtKMlg0VWs2VzlZMGtQMWFKUmxzdS0yNy12N3F6RER4RzEyUFBFSThlY1d6MUdtdDFlUHJWUjN3TFUxMG1XNnNpb1NVdEgwN3l0YW12b2hZUjg5LVJmTy1GanY0ZWJtcXZwWUowV3ZFeXJaMUpIbzBGcWlpQ1ZJdDhjZ096RXUzWFpoVWE1QU9qRk5zaDQ4YWZUZFoyMU05NWNfSTVIRnA2U3IydGRFRm12VSIsInAiOiJXIiwibSI6MTYyNzQ5NzgyMywidCI6MiwidiI6Mn0=";
-                file = './2d/index.min.html';
+                file = './2d/index.dev.html';
                 break;
             case "/panorama":
                 token = "JEUWvDPPkmfyNEkbCPKdSA==.eyJpIjoxNjA3OTc1NDAyMzI2LCJ1IjoiaHR0cHM6Ly9zdG9yYWdlLmdvb2dsZWFwaXMuY29tL3ZveHhsci0xNTA2NjA4MTEwMzYwLzE2MDc5NzU0MDIzMjYvcm9vdC9GSUxFLnBuZz9iZWFyZXJfdG9rZW49eWEyOS5jLktwOEJDUWd0U3FuU0hlY29zWUdIUWhON2lGZVJNYVRtd3FaVUNkZjZmMGRobmtKMlg0VWs2VzlZMGtQMWFKUmxzdS0yNy12N3F6RER4RzEyUFBFSThlY1d6MUdtdDFlUHJWUjN3TFUxMG1XNnNpb1NVdEgwN3l0YW12b2hZUjg5LVJmTy1GanY0ZWJtcXZwWUowV3ZFeXJaMUpIbzBGcWlpQ1ZJdDhjZ096RXUzWFpoVWE1QU9qRk5zaDQ4YWZUZFoyMU05NWNfSTVIRnA2U3IydGRFRm12VSIsInAiOiJXIiwibSI6MTYyNzQ5Nzg1OSwidCI6MywidiI6MX0=";
-                file = './1d/index.min.html';
+                file = './1d/index.dev.html';
                 break;
             case "/cloud":
-            default:
                 token = "luxWs2q1ECh+rXZjm5LGng==.eyJpIjoxNjA4MzgyOTQzMTA2LCJ1IjoiaHR0cHM6Ly9zdG9yYWdlLmdvb2dsZWFwaXMuY29tL3ZveHhsci0xNTA2NjA4MTEwMzYwLzE2MDgzODI5NDMxMDYvJXMuYmluP2JlYXJlcl90b2tlbj15YTI5LmMuS3A4QkNRZ3RTcW5TSGVjb3NZR0hRaE43aUZlUk1hVG13cVpVQ2RmNmYwZGhua0oyWDRVazZXOVkwa1AxYUpSbHN1LTI3LXY3cXpERHhHMTJQUEVJOGVjV3oxR210MWVQclZSM3dMVTEwbVc2c2lvU1V0SDA3eXRhbXZvaFlSODktUmZPLUZqdjRlYm1xdnBZSjBXdkV5cloxSkhvMEZxaWlDVkl0OGNnT3pFdTNYWmhVYTVBT2pGTnNoNDhhZlRkWjIxTTk1Y19JNUhGcDZTcjJ0ZEVGbXZVIiwicCI6IlciLCJtIjoxNjI3NDk3NTk2LCJ0IjoxLCJ2IjozfQ==";
-                file = './3d/index.min.html';
+                file = './3d/index.dev.html';
+                break;
+            default:
+                file = `.${req.url}`
                 break;
         }
         
-        let config = await getData(token);
-     
-        fs.readFile(file, 'utf8', function(err, data) 
+        if (token)
         {
-            data = data.replace("{{{content}}}", `JSON.parse('${config}')`)
-            res.end(data);
-        });
+            let config = await getData(token);
+         
+            fs.readFile(file, 'utf8', function(err, data) 
+            {
+                data = data.replace("{{{content}}}", `JSON.parse('${config}')`)
+                res.end(data);
+            });
+        }
+        else
+        {
+            fs.readFile(file, 'utf8', function(err, data) 
+            {
+                console.log(data);
+                res.end(data);
+            });
+        }
     }
     catch (error)
     {
