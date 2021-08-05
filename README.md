@@ -8,12 +8,12 @@ Voxxlr is a cloud platform to develop and host web applications around geospatia
 | app      | The app SDK provides high level components to manage multiple datasets and develop apps.   |
 | cloud    | The cloud SDK provides software to process geospatial datasets on linux or windows  |
 
-You can fully host the Voxxlr cloud platform on your own infrastructure or integrate seamlessly with the hosted version at www.voxxlr.com
+You can entirely host the Voxxlr cloud platform on your own infrastructure or integrate seamlessly with the hosted version at voxxlr.com.
 
 ## Installation
 After cloning this repo run 
 
-```javascript 
+```javascript
 node server.js 
 ```
 And point the browser to either of 
@@ -24,7 +24,8 @@ http://127.0.0.1:3000/model
 http://127.0.0.1:3000/map
 http://127.0.0.1:3000/panorama
 ```
-The datasets displayed are from the sandbox account at voxxlr, but the code producing the visualization is loaded from your local directory. 
+The sample datasets are loaded from the sandbox account at voxxlr, but the source code is loaded from your local directory. Any changes
+will be reflected when reloading the url.
 
 
 ## Building
@@ -34,21 +35,21 @@ The repository contains three index.html files
 doc/1d/index.html
 doc/2d/index.html
 doc/3d/index.html
-
 ```
-Which contain the viewers for panoramas, maps and 3d point clouds / CAD files. Running the integrated build system via
 
-```Java
+which contain the viewers for panoramas, maps and 3d point clouds / CAD files. Running the integrated build system via
+
+```java
 java -jar build.jar
 ```
-Generates the three version of each html file
+
+generates three version of each html file
 
 | File        | Description |
 | :---        |    :----   |
-| index.min.html    | All javacript code is inlined and optimized using the google closure compiler. References to the original .js files are lost. |
-| index.hub.html    | Loads the javascript files from the main branches off the github repository. This
-index file will work as a standalone file without a referece to a local copy of the repository |
-| index.dev.html    | Loads the javascript files from 127.0.0.1:3000 |
+| index.min.html    | All javascript code is inlined and optimized using the google closure compiler. References to the original .js files are lost. This index.html file works standalone without any external references |
+| index.hub.html    | Loads the javascript files from the main branch off this github repository. This index file will work standalone without a reference to a local copies of the .js file |
+| index.dev.html    | Loads the javascript files from 127.0.0.1:3000 for a local development using the server.js file mentioned above. All files are loaded from the local directory |
 
 
 
