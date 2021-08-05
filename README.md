@@ -8,7 +8,7 @@ Voxxlr is a cloud platform to develop and host web applications around geospatia
 | app      | The app SDK provides high level components to manage multiple datasets and develop apps.   |
 | cloud    | The cloud SDK provides software to process geospatial datasets on linux or windows  |
 
-You can entirely host the Voxxlr cloud platform on your own infrastructure or integrate seamlessly with the hosted version at voxxlr.com.
+You can fully host the Voxxlr cloud platform on your own infrastructure or integrate seamlessly with the hosted version at www.voxxlr.com
 
 ## Installation
 After cloning this repo run 
@@ -24,8 +24,7 @@ http://127.0.0.1:3000/model
 http://127.0.0.1:3000/map
 http://127.0.0.1:3000/panorama
 ```
-The sample datasets are loaded from the sandbox account at voxxlr, but the source code is loaded from your local directory. Any changes
-will be reflected when reloading the url.
+The datasets displayed are from the sandbox account at voxxlr, but the code producing the visualization is loaded from your local directory. 
 
 
 ## Building
@@ -47,13 +46,17 @@ generates three version of each html file
 
 | File        | Description |
 | :---        |    :----   |
-| index.min.html    | All javascript code is inlined and optimized using the google closure compiler. References to the original .js files are lost. This index.html file works standalone without any external references |
+| index.min.html    | All javascript code is inlined and optimized using the google closure compiler. References to the original .js files are lost. |
 | index.hub.html    | Loads the javascript files from the main branch off this github repository. This index file will work standalone without a reference to a local copies of the .js file |
-| index.dev.html    | Loads the javascript files from 127.0.0.1:3000 for a local development using the server.js file mentioned above. All files are loaded from the local directory |
+| index.dev.html    | Loads the javascript files from 127.0.0.1:3000 for a local development using the server.js file mentioned above |
 
 
+## Hosting
+
+The _doc_ SDK is designed to be loaded into an iframe and controlled via a message API. The source of the iframe must be one of the index.html files created during the build process. An initial dataset can either be loaded with the index file by replacing the _{{{content}}}_ mustache tag with a json object describing a document or, after the iframe has loaded, by sending a message  containing the root object. 
 
 
+For a documentation of the messaging API and a interactive fiddles visit www.voxxlr.com/api.html
 
 
 ## License
