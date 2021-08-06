@@ -1,7 +1,6 @@
 # Voxxlr Doc SDK
 
-Voxxlr is a cloud platform to develop and host web applications for geospatial content. It consists of a processing pipeline for various input formats and a web interface to visualize datasets in a browser and develop custom Apps. The platform is divided into several git repositories:
-
+Voxxlr is a cloud platform to develop and host web applications for geospatial content. It consists of a processing pipeline supporting various input formats and a web interface to visualize datasets in a browser and develop custom Apps. The platform is comprised of several repositories:
 
 | Repo        | Description |
 | :---        |    :----   |
@@ -9,15 +8,15 @@ Voxxlr is a cloud platform to develop and host web applications for geospatial c
 | app      | The app SDK provides high level components to manage multiple datasets and develop Apps.   |
 | cloud    | The cloud SDK provides software to process geospatial datasets on linux or windows  |
 
-A complete version of Voxxlr running the main branches of the repos listed above can be found at https://www.voxxlr.com. Follow the links below for a few sample Apps developed with Voxxlr. Parts of the platform such as data processing and storage can be hosted on private infrastructure and seamlessly integrated with the hosted version at Voxxlr. 
+A complete version of Voxxlr based on the main branches of the repos listed above can be found at https://www.voxxlr.com. Follow the links below for a few sample Apps developed with Voxxlr. 
 
-| Link        | Description |
-| :---        |    :----   |
-| https://app.voxxlr.com/1624016067425   | BIM Viewer  |
-| https://app.voxxlr.com/1620825035265   | Inspector App  |
-| https://app.voxxlr.com/1623155297253   | Volumetric App  |
+| Link        | Description | Image |
+| :---        |    :----   |  :----   |
+| https://app.voxxlr.com/1624016067425 | Explore, dissect and analyze 3D models. This dataset was upload to Voxxlr as an IFC file exported from AutoCAD. | ![](https://voxxlr.github.io/www/images/bim.webp) |
+| https://app.voxxlr.com/1620825035265 | Perform inspections on photogrammetry datasets. The photogrammetry was performed using Pix4d. Images, point cloud and camera metric were then upload to Voxxlr | ![](https://voxxlr.github.io/www/images/inspector.webp)  |
+| https://app.voxxlr.com/1623155297253 | Measure aggregate volumes and take elevation profiles in a drone map. The orthomosaic image and digital elevation model were uploaded to Voxxlr as geotiff files. | ![](https://voxxlr.github.io/www/images/volumetric.webp)  |
 
-
+The entire platform or indivdual components such as data processing and storage can be hosted on private infrastructure and seamlessly integrated with the hosted version at Voxxlr. For more information contact info@voxxlr.com.
 
 ## Installation
 After cloning this repo run 
@@ -25,7 +24,7 @@ After cloning this repo run
 ```javascript
 node server.js 
 ```
-And point the browser to either of 
+and then point the browser to either of 
 
 ```
 http://127.0.0.1:3000/cloud
