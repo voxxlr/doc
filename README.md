@@ -1,4 +1,4 @@
-# Voxxlr Doc SDK
+# Voxxlr _doc_ SDK
 
 Voxxlr is a cloud platform to develop and host web applications for geospatial content. It consists of a processing pipeline supporting various input formats and a web interface to visualize datasets in a browser and develop custom Apps. The platform is comprised of several repositories:
 
@@ -68,5 +68,5 @@ Note that the json object provided to the viewer contains a _data url_ to the ou
 For a documentation of the messaging API and a interactive fiddles visit https://www.voxxlr.com/api.html
 
 ## License
-The Voxxlr App SDK is licensed under the Affero GPL V3 license.
+The Voxxlr _doc_ SDK is licensed under the Affero GPL V3 license.
 
