@@ -93,7 +93,6 @@ const server = http.createServer(async (req, res) =>
         {
             fs.readFile(file, 'utf8', function(err, data) 
             {
-                console.log(data);
                 res.end(data);
             });
         }

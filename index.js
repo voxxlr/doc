@@ -774,38 +774,38 @@ V.Dataset = class
     {
         this.config = config;
         
+        this.id = config.id;
         this.type = config.type;
         this.root = config.root;
-        this.token = config.token;
-        this.id = config.id;
-        this.visible = typeof config.visible != "undefined" ? config.visible : true;
+        this.visible = config.hasOwnProperty("visible") ? config.visible : true;
         
         this.lastRefresh = 0;
             
-        let payload = this.token.substring(this.token.indexOf('.')+1);
-        payload = JSON.parse(atob(decodeURIComponent(payload)));
-        this.url = payload.u;
+        this.url = config.source.data;
+        this.refresh = config.source.refresh;
+        
+        //if (this.refresh)
+        //{
+        //	this.refreshToken();
+        //}
     }
 
     refreshToken()
     {
-        if (!this.promise)
+        if (!this.promise && this.refresh)
         {
             this.promise = new Promise((resolve,reject) =>
             {
                 var xhr = new XMLHttpRequest();
-                xhr.open("GET", "https://doc.voxxlr.com/refresh", true);
-                xhr.setRequestHeader('Authorization', 'Bearer ' + this.token);
+                xhr.open("GET", this.refresh, true);
                 xhr.onload = (e) =>
                 {
                     if (xhr.status == 200)
                     {
-                        this.token = e.currentTarget.responseText;
+                        let response = JSON.parse(e.currentTarget.responseText);
                         
-                        let payload = this.token.substring(this.token.indexOf('.')+1);
-                        payload = JSON.parse(atob(decodeURIComponent(payload)));
-                        this.url = payload.u;
-                        
+                        this.url = response.source.data;
+                        this.refresh = response.source.refresh;
                         resolve(this.url);
                     }
                     else
