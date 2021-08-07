@@ -1,22 +1,30 @@
-# Voxxlr Doc SDK
+# Voxxlr _doc_ SDK
 
-Voxxlr is a cloud platform to develop and host web applications around geospatial content. It consists of server side software to process data in the cloud and client software to visualize the results in the browser. A complete version of Voxxlr running the main branches of the repos listed below can be found at https://www.voxxlr.com. 
+Voxxlr is a cloud platform to develop and host web applications for geospatial content. It consists of a processing pipeline supporting various input formats and a web interface to visualize datasets in a browser and develop custom Apps. The platform is comprised of several repositories:
 
 | Repo        | Description |
 | :---        |    :----   |
-| **doc**      | **The doc SDK renders a dataset in an iframe that provides a messaging Api**       |
-| app      | The app SDK provides high level components to manage multiple datasets and develop apps.   |
-| cloud    | The cloud SDK provides software to process geospatial datasets on linux or windows  |
+| **doc**      | **The _doc_ SDK renders a dataset in an iframe and provides a messaging API**       |
+| app      | The _app_ SDK provides high level components to manage multiple datasets and develop Apps.   |
+| cloud    | The _cloud_ SDK provides software to process geospatial datasets on linux or windows  |
 
-You can fully host the Voxxlr cloud platform on your own infrastructure or integrate seamlessly with the hosted version at www.voxxlr.com
+A complete version of Voxxlr based on the main branches of the repos listed above can be found at https://www.voxxlr.com. Follow the links below for a few sample Apps developed with Voxxlr. 
+
+| Link        | Description | Image |
+| :---        |    :----   |  :----   |
+| https://app.voxxlr.com/1624016067425 | Explore, dissect and analyze 3D models. This dataset was upload to Voxxlr as an IFC file exported from AutoCAD. | ![](https://voxxlr.github.io/www/images/bim.webp) |
+| https://app.voxxlr.com/1620825035265 | Perform inspections on photogrammetry datasets. The photogrammetry was performed using Pix4d. Images, point cloud and camera metric were then upload to Voxxlr | ![](https://voxxlr.github.io/www/images/inspector.webp)  |
+| https://app.voxxlr.com/1623155297253 | Measure aggregate volumes and take elevation profiles in a drone map. The orthomosaic image and digital elevation model were uploaded to Voxxlr as geotiff files. | ![](https://voxxlr.github.io/www/images/volumetric.webp)  |
+
+The entire platform or indivdual components such as data processing and storage can be hosted on private infrastructure and seamlessly integrated with the hosted version at Voxxlr. For more information contact info@voxxlr.com.
 
 ## Installation
 After cloning this repo run 
 
-```javascript 
+```javascript
 node server.js 
 ```
-And point the browser to either of 
+and then point the browser to either of 
 
 ```
 http://127.0.0.1:3000/cloud
@@ -34,27 +42,31 @@ The repository contains three index.html files
 doc/1d/index.html
 doc/2d/index.html
 doc/3d/index.html
-
 ```
-Which contain the viewers for panoramas, maps and 3d point clouds / CAD files. Running the integrated build system via
 
-```Java
+which contain the viewers for panoramas, maps and 3d point clouds / CAD files. Running the integrated build system via
+
+```java
 java -jar build.jar
 ```
-Generates the three version of each html file
+
+generates three versions of each html file
 
 | File        | Description |
 | :---        |    :----   |
-| index.min.html    | All javacript code is inlined and optimized using the google closure compiler. References to the original .js files are lost. |
-| index.hub.html    | Loads the javascript files from the main branches off the github repository. This
-index file will work as a standalone file without a referece to a local copy of the repository |
-| index.dev.html    | Loads the javascript files from 127.0.0.1:3000 |
+| index.**min**.html    | All javascript code is inlined and optimized using the google closure compiler. References to the original .js files are lost. |
+| index.**hub**.html    | Loads the javascript files from the main branch off this github repository. This index file will work standalone without a reference to a local copies of the .js file |
+| index.**dev**.html    | Loads the javascript files from 127.0.0.1:3000 for a local development using the server.js file mentioned above |
 
 
+## Hosting
 
+The _doc_ SDK can be hosted on any domain simply by serving the appropriate index.html created during the build process. Before serving the file, the _{{{content}}}_ mustache tag has to be replaced with either _null_ or a json object describing which document to load intially. This json is created by the Voxxlr processing pipeline and typically stored server side. When running _server.js_, this json is retrieved from the hosted version at Voxxlr via doc.voxxlr.com REST endpoint. 
 
+Note that the json object provided to the viewer contains a _data url_ to the output generated by the processing as well as _refresh url_ should the data _url expire_. 
 
+For a documentation of the messaging API and a interactive fiddles visit https://www.voxxlr.com/api.html
 
 ## License
-The Voxxlr App SDK is licensed under the Affero GPL V3 license.
+The Voxxlr _doc_ SDK is licensed under the Affero GPL V3 license.
 
