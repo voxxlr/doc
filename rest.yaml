@@ -131,7 +131,7 @@ paths:
     post:
       tags:
       - "document"
-      summary: Get complete document and meta data
+      summary: Get complete document object and optional meta data
       requestBody:
         required: true
         content:
@@ -140,15 +140,21 @@ paths:
               type: object
       responses:
         200:
-          description: All meta data of this document in single object
+          description: Document and meta data in a single object
 
-  /refresh:
+  /refresh?token={path}:
     get:
       tags:
       - "document"
-      summary: Refresh document token
+      summary: Refresh source attribute of document object
+      parameters:
+        - name: token
+          in: query
+          description: document token
+          required: true
+          schema: {}
       responses:
          200:
-           description: All meta data of this document in single object
+           description: Source object containing data and refresh url
           
 components: {}
