@@ -32,7 +32,12 @@ http://127.0.0.1:3000/model
 http://127.0.0.1:3000/map
 http://127.0.0.1:3000/panorama
 ```
-The datasets displayed are from the sandbox account at voxxlr, but the code producing the visualization is loaded from your local directory. 
+The datasets displayed are from the sandbox account at voxxlr, but the code producing the visualization is loaded from your local directory. In order to view a data set process locally using the the processing pipeline run
+
+```javascript
+npm install open
+node server.js "path to /process/root created by the processing pipeline"  
+```
 
 
 ## Building

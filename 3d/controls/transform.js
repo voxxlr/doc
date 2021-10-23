@@ -227,8 +227,8 @@ V3.Transformer = class extends O.Composite
                                                          20, 21, 22, 22, 23, 20, // x+
                                                          ]));
 
-        this.texture0 = new GL.Texture(new GL.ImageLoader("/3d/controls/transform-inactive.png"));
-        this.texture1 = new GL.Texture(new GL.ImageLoader("/3d/controls/transform-active.png"));
+        this.texture0 = new GL.Texture(new GL.ImageLoader("https://voxxlr.github.io/doc/3d/controls/transform-inactive.png"));
+        this.texture1 = new GL.Texture(new GL.ImageLoader("https://voxxlr.github.io/doc/3d/controls/transform-active.png"));
         
         this.activeFace = -1;
         

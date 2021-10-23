@@ -9,8 +9,6 @@ M.CloudNode = class
         this.path = config.path;
         this.resolution = config.resolution;
         this.memoryUsed = config.memoryUsed;
-        this.axis = config.axis;
-        this.split = config.split;
         
         // render buffers
         this.buffers = {};
@@ -18,7 +16,8 @@ M.CloudNode = class
         {
             this.buffers[name] = new GL.ArrayBuffer(buffers[name]);
         }
-        
+        this.borrowed = 0;
+     
         // collision tree
         this.kdtree = kdtree;
         this.points = buffers.position;
@@ -36,11 +35,13 @@ M.CloudNode = class
         }
         
         // proxy children
-        if (config.low && config.high)// && this.path.length <= 1)
+        if (config.hasOwnProperty("axis"))
         {
+            this.axis = config.axis;
+            this.split = config.split;
+
             this.low =
             {
-                pointCount: config.low.count,
                 loading: false,
                 parent: this,
                 path: this.path + '0'
@@ -48,24 +49,15 @@ M.CloudNode = class
     
             this.high =
             {
-                pointCount: config.high.count,
                 loading: false,
                 parent: this,
                 path: this.path + '1'
             }
-            this.transition = 0;
-            this.transitionDirection = M.CloudNode.IN;
-        }
-        else
-        {
-            this.transition = M.Cloud.TRANSITION;
-            this.transitionDirection = M.CloudNode.IN; // shoud never be used
         }
         
         this.loading = false;
         this.loadedAt = V.time;
             
-        this.borrowed = 0;
         this.pointCount = config.count;
         this.nearDistance = Number.POSITIVE_INFINITY;
         
@@ -110,7 +102,6 @@ M.CloudNode = class
         {
             parent.low =
             {
-                pointCount: parent.low.pointCount,
                 loading: false,
                 parent: parent,
                 path: parent.low.path,
@@ -120,7 +111,6 @@ M.CloudNode = class
         {
             parent.high =
             {
-                pointCount: parent.high.pointCount,
                 loading: false,
                 parent: parent,
                 path: parent.high.path,
@@ -457,7 +447,7 @@ M.Cloud = class extends V.Dataset
         this.min = new GM.Vector3(this.root.min[0],this.root.min[1],this.root.min[2]);
         this.max = new GM.Vector3(this.root.max[0],this.root.max[1],this.root.max[2]);
         
-        this.maxPoints = 4000000;
+        this.maxBuffers = 80;
         this.maxLod = 0.00001;
         
         // workers and map of active XmlHttpRequest
@@ -495,7 +485,7 @@ M.Cloud = class extends V.Dataset
         {
             if (args.id == this.id)
             {
-                this.maxPoints = args.value;
+                this.maxBuffers = args.value;
                 V.touch3d();
                 
                 V.postMessage("cloud.point.max", (args));
@@ -535,7 +525,7 @@ M.Cloud = class extends V.Dataset
         if (path === "n")
         {
             this.node = node;
-            this.node.parent = { transition : M.Cloud.TRANSITION }
+            this.node.parent = {  }
             
             this.loadedCb(this.config);
         }
@@ -787,16 +777,15 @@ M.Cloud = class extends V.Dataset
     
             this.renderQ.clear();
             
-            var budget = this.maxPoints;
+            var budget = this.maxBuffers - 1;
             while (!selectQ.empty())
             {
                 var node = selectQ.dequeue();
-                budget += node.borrowed;
-                node.borrowed = 0;
+                budget++;
                 if (node.low != null && node.high != null)
                 {
                     // internal node
-                    if (budget - (node.low.pointCount + node.high.pointCount) > 0  && node.resolution > this.maxLod - 0.000001)
+                    if (budget - 2 > 0)
                     {
                         if (node.load())
                         {
@@ -811,13 +800,8 @@ M.Cloud = class extends V.Dataset
                                     node.low.splitPrio = 1.0/node.low.resolution;
                                 }
                                 node.low.distance = node.low.nearDistance;
-                                node.low.borrowed = node.low.pointCount;
-                                budget -= node.low.borrowed;
+                                budget--;
                                 selectQ.enqueue(node.low);	
-                            }
-                            else
-                            {
-                                //console.log("not");
                             }
                             
                             if (GM.Frustum.intersectsBox(frustum, node.high))							
@@ -832,67 +816,26 @@ M.Cloud = class extends V.Dataset
                                 }
                                 
                                 node.high.distance = node.high.nearDistance;
-                                node.high.borrowed = node.high.pointCount;
-                                budget -= node.high.borrowed;
+                                budget--;
                                 selectQ.enqueue(node.high);	
-                            }
-                            else
-                            {
-                                //console.log("not");
-                            }
-                            
-                            if (M.Cloud.TRANSITION != 0)
-                            {
-                                // parent has transitioned in
-                                if (node.parent.transition == M.Cloud.TRANSITION)
-                                {
-                                    if (node.transition == 0)
-                                    {
-                                        // start transitioning in
-                                        node.transition = 1;
-                                        node.transitionDirection = M.CloudNode.IN;
-                                        
-                                        // untrunsition children
-                                        node.low.transition = 0;
-                                        node.high.transition = 0;
-                                    }
-                                }
-                                
-                                if (node.transition > 0 && node.transition < M.Cloud.TRANSITION)
-                                {
-                                    this.renderQ.enqueue(node);
-                                }
                             }
                         }
                         else
                         {
-                            // children are not loaded. draw this one
-                            if (node.parent.transition == M.Cloud.TRANSITION)
-                            {
-                                this.renderQ.enqueue(node);
-                            }
-                            budget -= node.pointCount;
+                            this.renderQ.enqueue(node);
+                            budget--;
                         }
                     }
                     else
                     {
-                        // out of budget. draw this one
-                        if (node.parent.transition == M.Cloud.TRANSITION)
-                        {
-                            this.renderQ.enqueue(node);
-                        }
-                        node.transition = 0;  
-                        budget -= node.pointCount;
+                        this.renderQ.enqueue(node);
+                        budget--;
                     }
                 }
                 else
                 {
-                    // leaf node. draw this one
-                    if (node.parent.transition == M.Cloud.TRANSITION)
-                    {
-                        this.renderQ.enqueue(node);
-                    }
-                    budget -= node.pointCount;
+                    this.renderQ.enqueue(node);
+                    budget --;
                 }
             }
         }
@@ -909,27 +852,6 @@ M.Cloud = class extends V.Dataset
         {
             var node = this.renderQ.dequeue();
             node.render(V.camera, this.shader);
-            
-            if (node.transition > 0 && node.transition < M.Cloud.TRANSITION)
-            {
-                gl.enable(gl.BLEND);
-                gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
-                
-                gl.uniform1f(this.shader.alpha, node.transition/M.Cloud.TRANSITION);
-                if (node.low.points != null)
-                {
-                    node.low.render(V.camera, this.shader);
-                }
-                if (node.high.points != null)
-                {
-                    node.high.render(V.camera, this.shader);
-                }
-                gl.disable(gl.BLEND);
-                
-                node.transition += node.transitionDirection;
-                
-                V.touch3d();
-            }
         }
         
         this.shader.disableBuffer();
@@ -985,7 +907,7 @@ M.Cloud = class extends V.Dataset
     {
         if (viewpoint != null)
         {
-            this.maxPoints = Math.min(viewpoint.maxPoints, 4000000);
+            this.maxBuffers = viewpoint.maxBuffers || 50;
             this.shader.setViewpoint(viewpoint.shader);
         }
     }
@@ -994,11 +916,9 @@ M.Cloud = class extends V.Dataset
     {
         return {
             shader : this.shader.getViewpoint(),
-            maxPoints : this.maxPoints,
+            maxBuffers : this.maxBuffers
         }
     }
 
     
 }
-
-M.Cloud.TRANSITION = 0; // frame blending interval
