@@ -447,7 +447,7 @@ M.Cloud = class extends V.Dataset
         this.min = new GM.Vector3(this.root.min[0],this.root.min[1],this.root.min[2]);
         this.max = new GM.Vector3(this.root.max[0],this.root.max[1],this.root.max[2]);
         
-        this.maxBuffers = 80;
+        this.maxBuffers = 50;
         this.maxLod = 0.00001;
         
         // workers and map of active XmlHttpRequest
