@@ -24,20 +24,22 @@ After cloning this repo run
 ```javascript
 node server.js 
 ```
-and then point the browser to either of 
 
-```
-http://127.0.0.1:3000/cloud
-http://127.0.0.1:3000/model
-http://127.0.0.1:3000/map
-http://127.0.0.1:3000/panorama
-```
-The datasets displayed are from the sandbox account at voxxlr, but the code producing the visualization is loaded from your local directory. In order to view a data set process locally using the the processing pipeline run
+to open a browser running the viewer using a point cloud loaded from doc.voxxlr.com. Adding an additional command line parameter of either "cloud", "map", "panorama"
+or "model" will open a different data type. For example
 
 ```javascript
-npm install open
-node server.js "path to /process/root created by the processing pipeline"  
+node server.js map
 ```
+
+In order to open a dataset from a local folder provide a path after the type specifier for example. 
+
+```javascript
+node server.js map d:/processor/process
+```
+
+The path should point to the */process* directory created by the processing pipeline. Note that the viewer has no default camera mode enabled and it requires API calls
+to navigate a data set. Clone and start the server.js in the App SDK to see a more interactive demo. 
 
 
 ## Building
