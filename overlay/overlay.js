@@ -94,7 +94,7 @@ O.Object = class
 {
     constructor(id, activation, exclude)
     {
-        this.id = id || new Date().getTime();
+        this.id = (id == null) ? new Date().getTime() : id;
 
         this.exclude = exclude; // exclude from viewpoint recoding/setting
         
@@ -771,6 +771,36 @@ O.Overlay = class extends V.EventHandler
                 args[object.id] = object.toJson(args.filter);
             });
         });
+
+        // TODO change filter to function for get and select as fill
+        V.recvMessage("*.delete", (args, custom) => 
+        {
+            let filter = null;
+            if (args.filter)
+            {
+                filter = Function("return " + decodeURI(entry.filter))();
+            }
+ 
+            for (var i=this.objects.length -1; i>=0; i--)
+            {
+                let object = this.objects[i];
+                if (filter == null || filter.call(object))
+                {
+                    delete this.registry[object.id];
+                    object.detach();
+                    this.objects.splice(i, 1);
+                    
+                    let lIndex = this.visibleObjects.indexOf(object);
+                    if (lIndex != -1)
+                    {
+                        this.visibleObjects.splice(lIndex,1);
+                    }
+                }
+            };
+
+            V.postMessage("*.delete", args, custom);
+        });
+
         
         V.recvMessage("record.cancel", (args, custom) => 
         { 

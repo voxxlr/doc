@@ -1,174 +1,206 @@
-const http = require('http');
-const https = require('https');
-const url = require('url');
 const fs = require('fs');
-const open = require('open')
+const express = require('express')
+const cors = require('cors')
+
+ROOT_PATH = "./"
 
 const hostname = '127.0.0.1';
+//const hostname = '0.0.0.0';
 const port = 3000;
+const app = express()
 
-const server = http.createServer(async (req, res) => 
+app.use(cors());
+
+app.post('/list', express.json(), async (req, res) => 
 {
-    res.statusCode = 200;
-    res.setHeader('Content-Type', 'text/html');
- 
-    try 
-    {
-        let request = url.parse(req.url,true);
-        if (request.pathname == '/index.html')
-        {
-            let source = JSON.parse(decodeURIComponent(request.query.token));
+    let cursor = req.body.cursor;
 
-            let config;
-            if (source.hasOwnProperty("path"))
+    let list = fs.readdirSync(ROOT_PATH).filter(function (file) 
+    {
+        if (cursor)
+        {
+            if (cursor == ROOT_PATH+file)
             {
-                // from local directory
-                config = JSON.stringify(
-                {
-                    root : JSON.parse(fs.readFileSync(`${source.path}/root.json`, 'utf8')),
-                    type : source.type,
-                    source: {
-                        data : `http://${hostname}:${port}/root?path=${source.path}/root/%s.bin`
-                    },
-                    meta: 
-                    {
-                        name: "local"
-                    },
-                    id: "local"
-                });
+                cursor = null;
             }
-            else
-            {
-                // dataset hosted at doc.voxxlr.com
-                const content = JSON.stringify({ meta: request.query.meta ? request.query.meta.split(",") : [] })
+            return false;
+        }
+
+        if (fs.statSync(ROOT_PATH+file).isDirectory())
+        {
+            return fs.existsSync(`${ROOT_PATH}${file}/root.json`);
+        }
         
-                const options = 
-                {
-                    hostname: 'doc.voxxlr.com',
-                    port: 443,
-                    path: '/load',
-                    method: 'POST',
-                    headers: 
-                    {
-                        'Content-Type': 'application/json',
-                        'Content-Length': content.length,
-                        'Authorization' : `Bearer ${source.token}`
-                    }
-                }
-            
-                config = await new Promise((resolve, reject) => 
-                {
-                    process.env["NODE_NO_WARNINGS"] = 1;
-                    process.env["NODE_TLS_REJECT_UNAUTHORIZED"] = 0;
-                    const req = https.request(options, res => 
-                    {
-                        res.on('data', d => 
-                        {
-                            resolve(d)
-                        })
-                    })
-                
-                    req.on('error', error => 
-                    {
-                        reject(null);
-                    })
-                
-                    req.write(content)
-                    req.end()
-                });
-            }
-            
+        return false;
+    });
 
-            let index;
-            switch(source.type)
-            {
-                case "cloud": index = "./3d/index.dev.html"; break;
-                case "model": index = "./3d/index.dev.html"; break;
-                case "map": index = "./2d/index.dev.html"; break;
-                case "panorama": index = "./1d/index.dev.html"; break;
-            }
-
-           // let config = await getConfig(source,request.query.meta ? request.query.meta.split(",") : []);
-            fs.readFile(index, 'utf8', function(err, data) 
-            {
-                data = data.replace("{{{content}}}", `JSON.parse('${config}')`)
-                res.end(data);
-            });
-        }
-        else  if (request.pathname == '/root')
-        {
-            fs.readFile(request.query.path, function(err, data) 
-            {
-                res.end(data);
-            });
-        }
-        else
-        {
-            fs.readFile(`.${req.url}`, 'utf8', function(err, data) 
-            {
-                res.end(data);
-            });
-        }
-    }
-    catch (error)
+    content = []
+    list.every((dir)=>
     {
-        console.error(error)
-        res.end("<html><body>Unable to reach doc.voxxlr.com to load sample dataset</body></html>");
-    }
-});
+        content.push({
+            id: dir,
+            meta: { 
+                name: dir
+            },
+            token: JSON.stringify({ p: "W", type: "cloud", path: ROOT_PATH + dir })
+        })
+        cursor = ROOT_PATH+dir
+        return req.body.limit-- > 0;
+    });
 
+    res.send({ content, cursor });
+})
 
-server.listen(port, hostname, () => 
+app.post('/search', async (req, res) => 
 {
-    console.log(`\n\n`);
-    console.log(`---- starting demo Doc server --- `);
-    console.log(`---- `);
-    console.log(`---- usage: node server.js type path `);
-    console.log(`---- `);
-    console.log(`---- type in ['cloud','map','model','panorama']`);
-    console.log(`---- path is either empty or path to locally processed dataset i.e ..../processor/process"`);
-    console.log(`---- `);
-    console.log(`---- Voxxlr demo App server --- `);
-    console.log(`\n\n`);
+    res.send([]);
+})
+
+app.post('/load', async (req, res) => 
+{
+    let token = JSON.parse(decodeURIComponent(request.query.token));
+    res.send(getDataset(token));
+})
+
+
+
+app.get('/file', async (req, res) => 
+{
+    fs.readFile(req.query.path, function(err, data) 
+    {
+        res.type('binary')
+        res.end(data);
+    });
+})
+
+app.get('/index.html', (req, res) => 
+{
+    let token = JSON.parse(decodeURIComponent(req.query.token));
+
+    let index;
+    switch(token.type)
+    {
+        case "cloud": index = "./3d/index.dev.html"; break;
+        case "model": index = "./3d/index.dev.html"; break;
+        case "image": index = "./2d/index.dev.html"; break;
+        case "wmts": index = "./2d/index.dev.html"; break;
+        case "panorama": index = "./1d/index.dev.html"; break;
+    }
+    
+    fs.readFile(index, 'utf8', function(err, data) 
+    {
+        data = data.replace("{{{content}}}", JSON.stringify(getDataset(token)))
+        res.type('html')
+        res.send(data);
+    });
+})
+
+/*
+app.get('/index.dev.html', (req, res) => 
+{
+    fs.readFile(`.${req.url}`, 'utf8', function(err, data) 
+    {
+        data = data.replace("{{{content}}}", "null")
+        res.writeHead(200, {'Content-Type': mime['html'] });
+        res.end(data);
+    });
+})
+*/
+app.use(express.static('.'))
+
+app.use(function(req, res, next) 
+{
+    console.log(req.method + ":" + req.url);
+})
+
+
+app.listen(port, hostname, () => 
+{
+    console.log(`---- doc server running at ${ROOT_PATH} --- `);
 });
+
+
+
+
+
+
+function getDataset(token)
+{
+    let config;
+    
+    switch(token.type)
+    {
+        case "cloud": 
+            config =
+            {
+                root : JSON.parse(fs.readFileSync(`${token.path}/root.json`, 'utf8')),
+                type : token.type,
+                source: 
+                {
+                    data : `http://${hostname}:${port}/file?path=${token.path}/root/%s.bin`
+                },
+                meta: 
+                {
+                    name: token.path.substring(token.path.lastIndexOf('/')+1)
+                },
+                id: token.path.substring(token.path.lastIndexOf('/')+1)
+            };
+            break;
+
+        case "model": 
+            break;
+
+        case "image": 
+            config =
+            {
+                type : token.type,
+                source: 
+                {
+                    data : `http://${hostname}:${port}/file?path=${token.file}`,
+                },
+                x0: 0,
+                y0: 0,
+                x1: 1016,
+                y1: 1016,
+                meta: 
+                {
+                    name: "local"
+                },
+                id: token.path
+            };
+            break;
+        case "wmts": 
+
+            config =
+            {
+                type : token.type,
+                source: 
+                {
+                    data : `${token.data}`,
+                },
+                maxZoom: token.maxZoom,
+                meta: 
+                {
+                    name: "map"
+                },
+                id: token.id
+            };                
+            break;
+
+        case "panorama": 
+            break;
+    }
+    
+    return config;
+}
+
+
 
 
 // read command line
 var args = process.argv.slice(2);
 
-let source = {};
-
 if (args.length > 0)
 {
-    source.type = args[0]
+    ROOT_PATH = `${args[0].replace(/\\/g, "/")}/`;
 }
-else
-{
-    source.type = "cloud";
-}
-
-if (args.length > 1)
-{
-    source.path = args[1]
-}
-else
-{
-    switch (source.type) 
-    {
-        case "cloud":
-            source.token = "7pWwjmIHiTFPi9CZ30hq4Q==.eyJpIjoxNjA4MzgyOTQzMTA2LCJwIjoiUiIsIm0iOjE2MzQzMDEzNzcsInQiOjEsInYiOjN9"
-            break;
-        case "model":
-            source.token = "pIESgTg7brWgeTKRJnCdUw==.eyJpIjoxNjAyNDQxNzA2Nzg0LCJwIjoiUiIsIm0iOjE2MzQzMDEzNzcsInQiOjQsInYiOjN9"
-            break;
-        case "map":
-            source.token = "KyaQEEGWQ46UCJqyrBH8jA==.eyJpIjoxNjEwMzIxOTQ4OTYxLCJwIjoiUiIsIm0iOjE2MzQzMDEzNzcsInQiOjIsInYiOjJ9"
-            break;
-        case "panorama":
-            source.token = "wit16DsjbMM4hbxdWWgkcw==.eyJpIjoxNjA3OTc1NDAyMzI2LCJwIjoiUiIsIm0iOjE2MzQzMDEzODAsInQiOjMsInYiOjF9"
-            break;
-    }
-}
-
-// open browser
-open(`http://${hostname}:${port}/index.html?token=${encodeURIComponent(JSON.stringify(source))}`);

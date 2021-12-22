@@ -18,7 +18,21 @@
                 
             if (config != null)
             {       	
-                viewer.load(config.id, new M.Map(config, V.viewerCb, 0));
+                let map;
+                if (config.type == V.Dataset.MOSAIC)
+                {
+                    map = new M.Map(config, V.viewerCb, 0)
+                }
+                else if (config.type == V.Dataset.WMTS)
+                {
+                    map = new M.Wmts(config, V.viewerCb, 0)
+                }
+                else if (config.type == V.Dataset.IMAGE)
+                {
+                    map = new M.Image(config, V.viewerCb, 0)
+                }
+                
+                viewer.load(config.id, map);
             }
             else
             {
@@ -76,26 +90,26 @@
 </body>
 
 
-<script src= "http://127.0.0.1:3000/geom/geom.js"></script>
-<script src= "http://127.0.0.1:3000/gl/gl.js"></script>
-<script src= "http://127.0.0.1:3000/gl/shader.js"></script>
-<script src= "http://127.0.0.1:3000/gl/object.js"></script>
-<script src= "http://127.0.0.1:3000/index.js"></script>
-<script src= "http://127.0.0.1:3000/overlay/overlay.js"></script>
-<script src= "http://127.0.0.1:3000/overlay/anchor.js"></script>
-<script src= "http://127.0.0.1:3000/overlay/component.js"></script>
-<script src= "http://127.0.0.1:3000/overlay/geometry.js"></script>
-<script src= "http://127.0.0.1:3000/overlay/elevation.js"></script>
-<script src= "http://127.0.0.1:3000/overlay/line.js"></script>
-<script src= "http://127.0.0.1:3000/overlay/polygon.js"></script>
-<script src= "http://127.0.0.1:3000/overlay/point.js"></script>
-<script src= "http://127.0.0.1:3000/2d/map/shader.js"></script>
-<script src= "http://127.0.0.1:3000/2d/map/map.js"></script>
-<script src= "http://127.0.0.1:3000/2d/map/image.js"></script>
-<script src= "http://127.0.0.1:3000/2d/index.js"></script>
-<script src= "http://127.0.0.1:3000/2d/overlay/polygon.js"></script>
-<script src= "http://127.0.0.1:3000/2d/overlay/line.js"></script>
-<script src= "http://127.0.0.1:3000/2d/overlay/floodfill.js"></script>
+<script src= "/geom/geom.js"></script>
+<script src= "/gl/gl.js"></script>
+<script src= "/gl/shader.js"></script>
+<script src= "/gl/object.js"></script>
+<script src= "/index.js"></script>
+<script src= "/overlay/overlay.js"></script>
+<script src= "/overlay/anchor.js"></script>
+<script src= "/overlay/component.js"></script>
+<script src= "/overlay/geometry.js"></script>
+<script src= "/overlay/elevation.js"></script>
+<script src= "/overlay/line.js"></script>
+<script src= "/overlay/polygon.js"></script>
+<script src= "/overlay/point.js"></script>
+<script src= "/2d/map/shader.js"></script>
+<script src= "/2d/map/map.js"></script>
+<script src= "/2d/map/image.js"></script>
+<script src= "/2d/index.js"></script>
+<script src= "/2d/overlay/polygon.js"></script>
+<script src= "/2d/overlay/line.js"></script>
+<script src= "/2d/overlay/floodfill.js"></script>
 
 
 </html>

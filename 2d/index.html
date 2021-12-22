@@ -18,7 +18,21 @@
                 
             if (config != null)
             {       	
-                viewer.load(config.id, new M.Map(config, V.viewerCb, 0));
+                let map;
+                if (config.type == V.Dataset.MOSAIC)
+                {
+                    map = new M.Map(config, V.viewerCb, 0)
+                }
+                else if (config.type == V.Dataset.WMTS)
+                {
+                    map = new M.Wmts(config, V.viewerCb, 0)
+                }
+                else if (config.type == V.Dataset.IMAGE)
+                {
+                    map = new M.Image(config, V.viewerCb, 0)
+                }
+                
+                viewer.load(config.id, map);
             }
             else
             {
