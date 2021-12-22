@@ -150,7 +150,7 @@ void main()
     
     #elif defined(COLOR_SLOPE)
     
-        float d = acos(abs(normal.y))/1.57079632679;
+        float d = acos(abs(normal.y))/1.5700.309632679;
         d = 3.0*d;
         int i = int(floor(d));
         vertexColor = vec3(mix(colors[i], colors[i+1], fract(d)));
@@ -312,13 +312,33 @@ M.PointShader = class extends M.CloudShader
         this.defines[M.CloudShader.HEIGHT] = false;
         this.defines[M.CloudShader.SLOPE_FILTER] = false;
         this.defines[M.CloudShader.CLASS_FILTER] = false;
-        
+                    
+
         this.uniforms = 
         {
             height: { min: 0.0, max: 1.0 }, 
             slope: { min: 0.0, max: 1.0 }, 
             intensity: { min: 0.0, max: 1.0 },
-            classes : [],
+            classes : [	0,0,1,1,
+                        0,1,0,1,
+                        0.619,0.498,0.427,1,		// 2 Ground
+                        0.309,0.466,0.247,1,			// 3 Low Vegetation
+                        0.129,0.537,0.129,1,			// 4 Medium Vegetation
+                        0.807,0.937,0.749,1,		// 5 High Vegetation
+                        0.537,0,0.098,1,			// 6 Building
+                        0.537,0.537,0.537,1,		// 7 Low Point
+                        0.537,0.537,0.537,1,		// 8 Reserved
+                        0.247,0.639,0.866,1,			// 9 Water
+                        0.380,0.380,0.380,1,		    	// 10 Rail
+                        0.537,0.537,0.537,1,	// 11 Road Surface
+                        0.537,0.537,0.537,1,	// 12 Reserved
+                        0.537,0.537,0.537,1,	// 13 Wire - Guard (Shield)
+                        0.537,0.537,0.537,1,	// 14 Wire - Conductor (Phase)
+                        0.537,0.537,0.537,1,	// 15 Transmission Tower
+                        0.537,0.537,0.537,1,	// 16 Wire-Structure Connector (Insulator)
+                        0.537,0.537,0.537,1,	// 17 Bridge Deck
+                        1,1,1,1			// 18 High Noise  
+            ],
             colors : [
                 0.00,1.00,0.00,
                 0.00,0.00,1.00,
@@ -356,21 +376,6 @@ M.PointShader = class extends M.CloudShader
 
         if (this.options["class"])
         {
-            var clazz = this.options["class"];
-            for (var i=0; i<clazz.colors.length/3; i++)
-            {
-                this.uniforms.classes[i*4+0] = clazz.colors[i*3+0]/255.0;
-                this.uniforms.classes[i*4+1] = clazz.colors[i*3+1]/255.0;
-                this.uniforms.classes[i*4+2] = clazz.colors[i*3+2]/255.0;
-                this.uniforms.classes[i*4+3] = 1.0;
-            }
-            for (var i=clazz.colors.length/3; i<this.uniforms.classes.length/4; i++)
-            {
-                this.uniforms.classes[i*4+0] = 1;
-                this.uniforms.classes[i*4+1] = 1;
-                this.uniforms.classes[i*4+2] = 1;
-                this.uniforms.classes[i*4+3] = 0;
-            }
             this.defines[M.CloudShader.CLASS_FILTER] = true;
         }
 
