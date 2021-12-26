@@ -2,11 +2,28 @@ const fs = require('fs');
 const express = require('express')
 const cors = require('cors')
 
-ROOT_PATH = "./"
+// read command line
+var args = process.argv.slice(2);
 
-const hostname = '127.0.0.1';
-//const hostname = '0.0.0.0';
-const port = 3000;
+if (args.length > 0)
+{
+    ROOT_PATH = `${args[0].replace(/\\/g, "/")}/`;
+}
+else
+{
+    ROOT_PATH = "./"
+}
+
+if (args.length > 1)
+{
+    host = args[1]
+}
+else
+{
+    host = '127.0.0.1';
+}
+
+
 const app = express()
 
 app.use(cors());
@@ -114,9 +131,9 @@ app.use(function(req, res, next)
 })
 
 
-app.listen(port, hostname, () => 
+app.listen(3000, host, () => 
 {
-    console.log(`---- doc server running at ${ROOT_PATH} --- `);
+    console.log(`---- app server running at http://${host}:${3000}/launchpad.html in ${ROOT_PATH} --- `);
 });
 
 
@@ -137,7 +154,7 @@ function getDataset(token)
                 type : token.type,
                 source: 
                 {
-                    data : `http://${hostname}:${port}/file?path=${token.path}/root/%s.bin`
+                    data : `http://127.0.0.1:3000/file?path=${token.path}/root/%s.bin`
                 },
                 meta: 
                 {
@@ -156,7 +173,7 @@ function getDataset(token)
                 type : token.type,
                 source: 
                 {
-                    data : `http://${hostname}:${port}/file?path=${token.file}`,
+                    data : `http://127.0.0.1:3000/file?path=${token.file}`,
                 },
                 x0: 0,
                 y0: 0,
@@ -192,15 +209,4 @@ function getDataset(token)
     }
     
     return config;
-}
-
-
-
-
-// read command line
-var args = process.argv.slice(2);
-
-if (args.length > 0)
-{
-    ROOT_PATH = `${args[0].replace(/\\/g, "/")}/`;
 }

@@ -5,10 +5,8 @@ ADD . /root
 
 RUN apk add --update nodejs npm
 
-RUN npm install open
-RUN npm install mustache
+RUN npm install
 
 EXPOSE 4000
 
-#CMD ["node","server.js","/root/data"]
-CMD ["/bin/sh", "-c", "node server.js /root/data > server.log"]
+CMD ["/bin/sh", "-c", "node server.js /root/data 0.0.0.0 > server.log"]

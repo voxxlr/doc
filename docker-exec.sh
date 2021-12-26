@@ -1,1 +1,1 @@
-docker exec -it doc /bin/sh
+docker exec -it vx-doc /bin/sh

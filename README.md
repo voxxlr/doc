@@ -18,31 +18,19 @@ A complete version of Voxxlr based on the main branches of the repos listed abov
 
 Either the entire platform or indivdual components such as data processing and storage can be hosted on private infrastructure and seamlessly integrated with the hosted version at Voxxlr. For more information contact info@voxxlr.com.
 
-## Installation
+## Running the doc server
 After cloning this repo run 
 
 ```javascript
-node server.js 
-```
-
-to open a browser running the viewer using a point cloud loaded from doc.voxxlr.com. Adding an additional command line parameter of either "cloud", "map", "panorama"
-or "model" will open a different data type. For example
-
-```javascript
-node server.js map
-```
-
-In order to open a dataset from a local folder provide a path after the type specifier for example. 
-
-```javascript
-node server.js map d:/processor/process
+npm  install
+node server.js DATA_DIR
 ```
 
 The path should point to the */process* directory created by the processing pipeline. Note that the viewer has no default camera mode enabled and it requires API calls
 to navigate a data set. Clone and start the server.js in the App SDK to see a more interactive demo. 
 
 
-## Building
+## Building the doc server
 
 The repository contains three index.html files
 ```
@@ -62,7 +50,6 @@ generates three versions of each html file
 | File        | Description |
 | :---        |    :----   |
 | index.**min**.html    | All javascript code is inlined and optimized using the google closure compiler. References to the original .js files are lost. |
-| index.**hub**.html    | Loads the javascript files from the main branch off this github repository. This index file will work standalone without a reference to a local copies of the .js file |
 | index.**dev**.html    | Loads the javascript files from 127.0.0.1:3000 for a local development using the server.js file mentioned above |
 
 
