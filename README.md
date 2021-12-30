@@ -20,7 +20,7 @@ Either the entire platform or indivdual components such as data processing and s
 
 ## Running the doc server
 
-After cloning this repo there are two ways to run the doc server on a local machine using docker or nodejs. In either case, the server requires a path to a directory (DATA_DIR) containing datasets previsously processed using the [_processor_](https://github.com/voxxlr/processor).  
+After cloning this repo there are two ways to run the _doc_ server using either docker or nodejs. In either case, the server requires a path to a directory (DATA_DIR) containing datasets previsously processed using the [_processor_](https://github.com/voxxlr/processor).  
 
 
 #### Nodejs
@@ -67,7 +67,7 @@ generates three versions of each html file
 | File        | Description |
 | :---        |    :----   |
 | index.**min**.html    | All javascript code is inlined and optimized using the google closure compiler. References to the original .js files are lost. |
-| index.**dev**.html    | Loads the javascript files from 127.0.0.1:3000 for a local development using the server.js file mentioned above |
+| index.**dev**.html    | Loads the javascript files individually to support to support debugging using the developer console |
 
 ## License
 The Voxxlr _doc_ SDK is licensed under the Affero GPL V3 license.
