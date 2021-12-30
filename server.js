@@ -54,14 +54,20 @@ app.post('/list', express.json(), async (req, res) =>
     content = []
     list.every((dir)=>
     {
-        content.push({
-            id: dir,
-            meta: { 
-                name: dir
-            },
-            token: JSON.stringify({ p: "W", type: "cloud", path: ROOT_PATH + dir })
-        })
-        cursor = ROOT_PATH+dir
+        let root = JSON.parse(fs.readFileSync(`${ROOT_PATH}${dir}/root.json`, 'utf8'));
+
+        if (req.body.type == null || req.body.type.includes(root["type"]))
+        {
+            content.push({
+                id: dir,
+                meta: { 
+                    name: dir
+                },
+                token: JSON.stringify({ p: "W", type: root["type"], path: ROOT_PATH + dir })
+            })
+            cursor = ROOT_PATH+dir
+        }
+    
         return req.body.limit-- > 0;
     });
 
@@ -112,17 +118,6 @@ app.get('/index.html', (req, res) =>
     });
 })
 
-/*
-app.get('/index.dev.html', (req, res) => 
-{
-    fs.readFile(`.${req.url}`, 'utf8', function(err, data) 
-    {
-        data = data.replace("{{{content}}}", "null")
-        res.writeHead(200, {'Content-Type': mime['html'] });
-        res.end(data);
-    });
-})
-*/
 app.use(express.static('.'))
 
 app.use(function(req, res, next) 
@@ -133,7 +128,7 @@ app.use(function(req, res, next)
 
 app.listen(3000, host, () => 
 {
-    console.log(`---- app server running at http://${host}:${3000}/launchpad.html in ${ROOT_PATH} --- `);
+    console.log(`---- doc server running at http://${host}:${3000}/launchpad.html in ${ROOT_PATH} --- `);
 });
 
 
@@ -165,6 +160,20 @@ function getDataset(token)
             break;
 
         case "model": 
+           config =
+            {
+                root : JSON.parse(fs.readFileSync(`${token.path}/root.json`, 'utf8')),
+                type : token.type,
+                source: 
+                {
+                    data : `http://127.0.0.1:3000/file?path=${token.path}/root/model.bin`
+                },
+                meta: 
+                {
+                    name: token.path.substring(token.path.lastIndexOf('/')+1)
+                },
+                id: token.path.substring(token.path.lastIndexOf('/')+1)
+            };
             break;
 
         case "image": 
