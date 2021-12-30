@@ -20,7 +20,7 @@ Either the entire platform or indivdual components such as data processing and s
 
 ## Running the doc server
 
-After cloning this repo run there are two ways to run the doc server on a local machine. The server requires a path to a directory (DATA_DIR) containing datasets previsously processed using the [_processor_](https://github.com/voxxlr/processor).  
+After cloning this repo there are two ways to run the doc server on a local machine using docker or nodejs. In either case, the server requires a path to a directory (DATA_DIR) containing datasets previsously processed using the [_processor_](https://github.com/voxxlr/processor).  
 
 
 #### Nodejs
