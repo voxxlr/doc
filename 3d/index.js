@@ -29,6 +29,7 @@ V3.Viewer = class extends V.Viewer
         this.controller.attach();
         
         this.axis = new GL.Axis(1,1,1);
+        this.axis.visible = false;
 
         V.recvMessage("import.create", (document, config) => 
         { 
