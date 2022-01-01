@@ -2,14 +2,14 @@
 
 GL.Axis = function (sx,sy,sz) 
 {
-    sx |= 1;
-    sy |= 1;
-    sz |= 1;
-    this.position = new GL.ArrayBuffer(new Float32Array([
-        0, 0, 0,  sx, 0, 0,
-        0, 0, 0,  0, sy, 0,
-        0, 0, 0,  0, 0, sz
-    ]));
+    this.px = 0;
+    this.py = 0;
+    this.pz = 0;
+    this.sx = sx | 1;
+    this.sy = sy | 1;
+    this.sz = sz | 1;
+    this.visible = true;
+
     this.color = new GL.ArrayBuffer(new Uint8Array([
         255, 0, 0,  255, 0, 0,
         0, 255, 0,  0, 255, 0,
@@ -18,30 +18,48 @@ GL.Axis = function (sx,sy,sz)
     
     this.shader = new GL.LineShader();
     this.shader.compile();
+
+    this.update();
 };
 
 GL.Axis.prototype.render = function (camera)
 {
-    this.shader.useProgram(camera);
-    this.shader.enableBuffer(this);
-    this.shader.bindBuffer(this);
-    gl.disable(gl.DEPTH_TEST);
-    gl.drawArrays(gl.LINES, 0, 18/3);
-    this.shader.disableBuffer(this);
-    gl.enable(gl.DEPTH_TEST);
+    if (this.visible)
+    {
+        this.shader.useProgram(camera);
+        this.shader.enableBuffer(this);
+        this.shader.bindBuffer(this);
+        gl.disable(gl.DEPTH_TEST);
+        gl.drawArrays(gl.LINES, 0, 18/3);
+        this.shader.disableBuffer(this);
+        gl.enable(gl.DEPTH_TEST);
+    }
 }
 
-GL.Axis.prototype.resize = function (dx,dy,dz)
+GL.Axis.prototype.update = function ()
 {
-    this.position.set(new Float32Array([
-                            0, 0, 0,  dx, 0, 0,
-                            0, 0, 0,  0, dy, 0,
-                            0, 0, 0,  0, 0, dz
-                        ]));
-    
+    this.position = new GL.ArrayBuffer(new Float32Array([
+        this.px, this.py, this.pz,  this.px+this.sx, this.py, this.pz,
+        this.px, this.py, this.pz,  this.px, this.py+this.sy, this.pz,
+        this.px, this.py, this.pz,  this.px, this.py, this.pz+this.sz
+    ]));
 }
 
+GL.Axis.prototype.resize = function (aabb)
+{
+    this.sx = aabb.max.x - aabb.min.x;
+    this.sy = aabb.max.y - aabb.min.y;
+    this.sz = aabb.max.z - aabb.min.z;
+    this.update();
+}
 
+GL.Axis.prototype.moveTo = function (x,y,z)
+{
+    this.px = x;
+    this.py = y;
+    this.pz = z;
+    this.update();
+}
 
 GL.BoundingBox = class
 {

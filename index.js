@@ -89,7 +89,7 @@ V = (function() {
         window.parent.postMessage( { action, args, optional }, "*");
     }
     
-    object.recvMessage = (name, callback) =>
+    object.recvMessage = (name, callback,owner) =>
     {
         if (name instanceof Array)
         {
@@ -97,6 +97,7 @@ V = (function() {
         }
         else
         {
+            callback.owner = owner;
             if (V.api[name])
             {
                 V.api[name].push(callback);
@@ -108,6 +109,28 @@ V = (function() {
         }
     }
     
+    object.unrecvMessage = (name, owner) =>
+    {
+        if (name instanceof Array)
+        {
+            name.forEach(entry => object.unrecvMessage(entry, owner));
+        }
+        else
+        {
+            if (V.api[name])
+            {
+                let list = V.api[name];
+                for (var i=0; i<list.length; i++)
+                {
+                    if (list[i].owner == owner)
+                    {
+                        list.splice(i,1);
+                    }
+                }
+            }
+        }
+    }
+
     object.viewerCb = function(document)
     {
         let custom = {};

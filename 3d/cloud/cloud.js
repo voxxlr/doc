@@ -245,7 +245,7 @@ M.CloudNode = class
         }
         else
         {
-            var threshold = 12.17*this.resolution*this.resolution;
+            var threshold = 3.17*this.resolution*this.resolution;
             
             var iD = Number.POSITIVE_INFINITY;
             var iN = 0;
@@ -324,7 +324,8 @@ M.CloudNode = class
             }
             else
             {
-                return { d: iD, n: this.normals ? this.normals[iN] : 523264};
+                return { d: iD, n: this.normals ? this.normals[iN] : 523264, p: { x:this.points[iN*3+0], y:this.points[iN*3+1], z:this.points[iN*3+2] }};
+                //return { d: iD, n: this.normals ? this.normals[iN] : 523264};
             }
         }
     }
@@ -894,7 +895,8 @@ M.Cloud = class extends V.Dataset
                 
                 if (options.xyz)
                 {
-                    options.xyz = ray.at(intersect.d, options.xyz);
+                   // options.xyz = ray.at(intersect.d, options.xyz);
+                   options.xyz = intersect.p;
                 }
             }
         }

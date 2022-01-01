@@ -398,13 +398,22 @@ C.Intersect.prototype.moveControl = function(event)
 C.Intersect.prototype.getPoint = function(event)
 {
     var ray = V.camera.getRay(event);
-    var distance = V.viewer.raycast(ray, { distance: Number.POSITIVE_INFINITY }).distance;
+    var cast = V.viewer.raycast(ray, { distance: Number.POSITIVE_INFINITY, xyz: {} });
     
-    if (distance != Number.POSITIVE_INFINITY)
+    if (cast.distance != Number.POSITIVE_INFINITY)
     {
-        C.p.x = ray.origin.x + ray.direction.x*distance;
-        C.p.y = ray.origin.y + ray.direction.y*distance;
-        C.p.z = ray.origin.z + ray.direction.z*distance;
+        //if (cast.xyz)
+        {
+            C.p.x = cast.xyz.x;
+            C.p.y = cast.xyz.y;
+            C.p.z = cast.xyz.z;
+        }
+        //else
+        {
+            //C.p.x = ray.origin.x + ray.direction.x*cast.distance;
+            //C.p.y = ray.origin.y + ray.direction.y*cast.distance;
+            //C.p.z = ray.origin.z + ray.direction.z*cast.distance;
+        }
         return C.p;
     }
     return null;

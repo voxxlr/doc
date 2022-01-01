@@ -28,7 +28,7 @@ V3.Viewer = class extends V.Viewer
         this.controller = new V3.Controller();
         this.controller.attach();
         
-        this.axis = new GL.Axis(20,20,20);
+        this.axis = new GL.Axis(1,1,1);
 
         V.recvMessage("import.create", (document, config) => 
         { 
@@ -79,6 +79,19 @@ V3.Viewer = class extends V.Viewer
             V.postMessage("*.get", args, custom);
         });
         
+        V.recvMessage("axes", (args, custom) => 
+        { 
+            if (args.hasOwnProperty("origin"))
+            {
+                this.axis.moveTo(args.origin.x, args.origin.y, args.origin.z);
+            }
+            if (args.hasOwnProperty("visible"))
+            {
+                this.axis.visible = args.visible;
+            }
+            V.postMessage("axes", args, custom);
+            V.touch3d();
+        });
 
         // thus one must be called last since it bounces the message 
         V.recvMessage("viewpoint.get", (args) => 
@@ -186,9 +199,11 @@ V3.Viewer = class extends V.Viewer
                 }
             }
             GL.BoundingBox.merge(this.aabb, entry);
+
+            this.axis.resize(this.aabb);
         }
         
-        //this.axis.render(V.camera);
+        this.axis.render(V.camera);
     }
     
     getDistanceAlpha(point, p0, p1)
