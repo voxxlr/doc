@@ -342,11 +342,22 @@ GM.Vector3 = class
     
     static sub(a, s, result) 
     {
+        result = result || {}
         result.x = a.x - s.x;
         result.y = a.y - s.y;
         result.z = a.z - s.z;
         return result;
     }
+
+    static sub3V(x,y,z, s, result) 
+    {
+        result = result || {}
+        result.x = x - s.x;
+        result.y = y - s.y;
+        result.z = z - s.z;
+        return result;
+    }
+
 
     static read(v, array, offset) 
     {
@@ -1528,27 +1539,21 @@ GM.Projection = class
 
     getNear() 
     {
-        var delta = this.far - this.near;
-        return this.near + delta*this.nearOffset;
+        return this.near;
     }
 
     getFar() 
     {
-        var delta = this.far - this.near;
-        return this.far - delta*(1.0-this.farOffset);
+        return this.far;
     }
 
     set(json) 
     {
-        this.farOffset = json.farOffset || 1;
-        this.nearOffset = json.nearOffset || 0;
     };	
 
     toJson() 
     {
         return { 
-            farOffset : this.farOffset, 
-            nearOffset : this.nearOffset
         };
     };
 };
@@ -1567,15 +1572,13 @@ GM.PerspectiveProjection = class extends GM.Projection
 
     update(camMatrix, camInverse, viewport) 
     {
-        var delta = this.far - this.near;
-        var near = this.near + delta*this.nearOffset;
-        var far = this.far - delta*(1.0-this.farOffset);
-        
-        var aspect = viewport.width/viewport.height;
+        let near = this.near;
+        let far = this.far;
+        let aspect = viewport.width/viewport.height;
+
         this.fovV = this.fovH/aspect;
 
-        var f = 1/this.fovV;
-        
+        let f = 1/this.fovV;
         let e = this.matrix;
         e[0] = f/aspect;	e[4] = 0;	e[8] = 0;					    e[12] = 0;
         e[1] = 0;		    e[5] = f;	e[9] = 0;						e[13] = 0;

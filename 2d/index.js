@@ -136,7 +136,7 @@ V2.Viewer = class extends V.Viewer
     
     view(aabb)
     {
-        let position = GL.BoundingBox.center(aabb, {});
+        let position = GL.BoundingBox.center(aabb);
         position.z = this.aabb.max.z;
         let dx = aabb.max.x - aabb.min.x;
         let dy = aabb.max.y - aabb.min.y;
@@ -147,7 +147,7 @@ V2.Viewer = class extends V.Viewer
     {
         super.load(id, model);
         
-        let position = GL.BoundingBox.center(this.aabb, {});
+        let position = GL.BoundingBox.center(this.aabb);
         position.z = this.aabb.max.z;
         let dx = this.aabb.max.x - this.aabb.min.x;
         let dy = this.aabb.max.y - this.aabb.min.y;
@@ -392,7 +392,7 @@ V2.Camera = class extends GM.Camera
 
         V.recvMessage("camera", (args) => 
         { 
-            let position = args.position || GL.BoundingBox.center(V.viewer.aabb, {});	
+            let position = args.position || GL.BoundingBox.center(V.viewer.aabb);	
             
             if (!position.hasOwnProperty("z"))
             {
@@ -523,7 +523,7 @@ V2.Camera = class extends GM.Camera
 
 
 
-V2.Controller = class extends V.Controller
+V2.Controller = class extends V.CameraController
 {
     constructor()
     {
@@ -537,7 +537,7 @@ V2.Controller = class extends V.Controller
                 aabb = V.viewer.aabb;
             }
             
-            let position = GL.BoundingBox.center(aabb, {});
+            let position = GL.BoundingBox.center(aabb);
             position.z = aabb.max.z || this.camera.position.z;
             
             let dx = aabb.max.x - aabb.min.x;
@@ -555,7 +555,7 @@ V2.Controller = class extends V.Controller
             this.drag = 0;
             this.camera.zoomTransition = -1;
             this.camera.zoom++;
-            this.actionFn = this.zoomFn.bind(this);
+            this.updateFn = this.zoomFn;
         });
         
         V.recvMessage("viewpoint", (viewpoint) => 
@@ -564,9 +564,10 @@ V2.Controller = class extends V.Controller
             this.camera.zoom = viewpoint.camera.zoom;
             this.tweenStart(null); // need to triger camera moving event
         });
+
     }
 
-    panFn()
+    panFn(ctr)
     {
         var dx = 0.5*(this.currPos.x - this.startPos.x)*gl.drawingBufferWidth;
         var dy = 0.5*(this.currPos.y - this.startPos.y)*gl.drawingBufferHeight;
@@ -575,8 +576,8 @@ V2.Controller = class extends V.Controller
         this.camera.position.x = this.sx - dx/scale;
         this.camera.position.y = this.sy + dy/scale;
     }
-    
-    zoomFn()
+        
+    zoomFn(ctr)
     {
         var pS0 = 1.0/Math.pow(2, this.camera.zoom + this.camera.zoomTransition);
 
@@ -595,7 +596,7 @@ V2.Controller = class extends V.Controller
 
         if (V.camera.zoomTransition == 0)
         {
-            this.actionFn = null;
+            this.updateFn = null;
         }
     }
 
@@ -606,7 +607,7 @@ V2.Controller = class extends V.Controller
         {
             this.sx = this.camera.position.x;
             this.sy = this.camera.position.y;
-            this.actionFn = this.panFn.bind(this);
+            this.updateFn = this.panFn;
         }
     };
 
@@ -616,21 +617,11 @@ V2.Controller = class extends V.Controller
         {
             if (V.camera.zoom < M.maxZoom)
             {
-                let cast3d = V.Controller.cast3d;
-            //	console.log(cast3d.distance);
+                let cast3d = this.cast3d;
                 if (cast3d.distance != Number.POSITIVE_INFINITY)
                 {
                     V.postMessage(V.viewer.datasets[cast3d.id].type+".dblclick",cast3d);
                 }
-
-                /*
-                this.startD = V.time;
-                this.drag = 0;
-                this.camera.zoomTransition = -1;
-                this.camera.zoom++;
-                this.actionFn = this.zoomFn.bind(this);
-                event.stopImmediatePropagation();
-                */
             }
         }
     };
@@ -661,7 +652,7 @@ V2.Controller = class extends V.Controller
             }
         }
         
-        this.actionFn = this.zoomFn.bind(this);
+        this.updateFn = this.zoomFn;
         
         event.stopImmediatePropagation();
     };
@@ -672,7 +663,7 @@ V2.Controller = class extends V.Controller
         
         this.sx = this.camera.position.x;
         this.sy = this.camera.position.y;
-        this.actionFn =  this.panFn.bind(this);
+        this.updateFn =  this.panFn;
     }
 };
 

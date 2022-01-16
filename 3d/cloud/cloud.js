@@ -121,7 +121,7 @@ M.CloudNode = class
 
     render(camera, shader)
     {
-        shader.setPointSize(camera, 1.22474487139*this.resolution);   // sqrt(3/2)*this.resolution;
+        shader.setPointSize(camera, 1.62474487139*this.resolution);   // sqrt(3)*this.resolution;
         
         if (this.pointCount > 0)
         {
@@ -642,37 +642,6 @@ M.Cloud = class extends V.Dataset
                     buffers[attr.name] = new Int32Array(xhr.response, pointer, count*attr.size);
                     pointer += count*attr.size*4;
                 }
-                
-                /*
-                if (attr.name === "position")
-                {
-                    let a = buffers["position"];
-                    let minX = Number.POSITIVE_INFINITY;
-                    let minY = Number.POSITIVE_INFINITY;
-                    let minZ = Number.POSITIVE_INFINITY;
-                    let maxX = Number.NEGATIVE_INFINITY;
-                    let maxY = Number.NEGATIVE_INFINITY;
-                    let maxZ = Number.NEGATIVE_INFINITY;
-
-                    for (var x=0; x<a.length/3; x++)
-                    {
-                        minX = Math.min(minX, a[x*3+0]);
-                        maxX = Math.max(maxX, a[x*3+0]);
-                        minY = Math.min(minY, a[x*3+1]);
-                        maxY = Math.max(maxY, a[x*3+1]);
-                        minZ = Math.min(minZ, a[x*3+2]);
-                        maxZ = Math.max(maxZ, a[x*3+2]);
-                    }
-                                        
-                    config.min[0] = minX;
-                    config.min[1] = minY;
-                    config.min[2] = minZ;
-                    config.max[0] = maxX;
-                    config.max[1] = maxY;
-                    config.max[2] = maxZ;
-                }
-                */
-                
 
                 pointer = Math.ceil(pointer/4)*4;
             }

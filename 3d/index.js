@@ -176,6 +176,8 @@ V3.Viewer = class extends V.Viewer
                 return O.numberFormat.format((number*35.3147).toFixed(2)) +" ft\u00B3";
             }
         }
+
+        //this.frameBuffer = new GL.FrameBuffer();
         
         this.animate();
     }
@@ -188,6 +190,12 @@ V3.Viewer = class extends V.Viewer
         }
         V.camera.updateMatrix();
         
+
+        if (this.frameBuffer)
+        {
+            gl.bindFramebuffer(gl.FRAMEBUFFER, this.frameBuffer.glId);
+        }
+
         GL.BoundingBox.init(this.aabb);
         for (var id in this.datasets)
         {
@@ -201,10 +209,17 @@ V3.Viewer = class extends V.Viewer
             }
             GL.BoundingBox.merge(this.aabb, entry);
 
-            this.axis.resize(this.aabb);
+            this.axis.resize(this.aabb, V.camera);
         }
         
         this.axis.render(V.camera);
+
+        if (this.frameBuffer)
+        {
+            gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+            
+            this.frameBuffer.render();
+        }
     }
     
     getDistanceAlpha(point, p0, p1)
@@ -252,6 +267,125 @@ V3.Viewer = class extends V.Viewer
 
 
 
+
+
+GL.FrameBuffer = function FrameBuffer()
+{
+    // Create a color texture
+    this.colorTexture = gl.createTexture();
+    gl.bindTexture(gl.TEXTURE_2D, this.colorTexture);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.drawingBufferWidth, gl.drawingBufferHeight, 0, gl.RGBA, gl.UNSIGNED_BYTE, null);
+    gl.bindTexture(gl.TEXTURE_2D, null);
+    
+    /*
+    this.colorBuffer = gl.createRenderbuffer();
+    gl.bindRenderbuffer(gl.RENDERBUFFER, this.colorBuffer);
+    gl.renderbufferStorageMultisample(gl.RENDERBUFFER, 4, gl.RGBA8, size, size);
+    gl.bindRenderbuffer(gl.RENDERBUFFER, null);
+    */
+
+    // Create the depth texture
+    this.depthTexture = gl.createTexture();
+    gl.bindTexture(gl.TEXTURE_2D, this.depthTexture);
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.DEPTH_COMPONENT24, gl.drawingBufferWidth, gl.drawingBufferHeight, 0, gl.DEPTH_COMPONENT, gl.UNSIGNED_INT, null);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+    gl.bindTexture(gl.TEXTURE_2D, null);
+
+    this.glId = gl.createFramebuffer();
+    gl.bindFramebuffer(gl.FRAMEBUFFER, this.glId);
+    gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, this.colorTexture, 0);
+    gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.DEPTH_ATTACHMENT, gl.TEXTURE_2D, this.depthTexture, 0);
+    gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+    
+    this.position = new GL.ArrayBuffer(new Float32Array([
+                                                      // First triangle:
+                                                      1.0,  1.0, 0.0,
+                                                     -1.0,  1.0, 0.0,
+                                                     -1.0, -1.0, 0.0,
+                                                     // Second triangle:
+                                                     -1.0, -1.0, 0.0,
+                                                      1.0, -1.0, 0.0,
+                                                      1.0,  1.0, 0.0
+                                                     ]));
+
+    //this.shader = shader;
+    //this.shader.compile();
+
+/*
+    this.colorBuffer = gl.createRenderbuffer();
+    gl.bindRenderbuffer(gl.RENDERBUFFER, this.colorBuffer);
+    gl.renderbufferStorageMultisample(gl.RENDERBUFFER, 4, gl.RGBA8, size, size);
+    gl.bindRenderbuffer(gl.RENDERBUFFER, null);
+    
+    this.glId = gl.createFramebuffer();
+    gl.bindFramebuffer(gl.FRAMEBUFFER, this.glId);
+    gl.framebufferRenderbuffer(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.RENDERBUFFER, this.colorBuffer);
+    //gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.DEPTH_ATTACHMENT, gl.TEXTURE_2D, this.depthTexture, 0);
+    gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+    
+    this.glCopyId = gl.createFramebuffer();
+    gl.bindFramebuffer(gl.FRAMEBUFFER, this.glCopyId);
+    gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, this.colorTexture, 0);
+    //gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.DEPTH_ATTACHMENT, gl.TEXTURE_2D, this.depthTexture, 0);
+    gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+*/
+    
+}
+
+GL.FrameBuffer.prototype.render = function ()
+{
+}
+
+GL.FrameBuffer.prototype.render = function (shader)
+{
+    /*
+    gl.bindFramebuffer(gl.DRAW_FRAMEBUFFER, null);
+    gl.bindFramebuffer(gl.READ_FRAMEBUFFER, this.glId);
+    gl.blitFramebuffer(0, 0, gl.drawingBufferWidth, gl.drawingBufferHeight, 0, 0, gl.drawingBufferWidth, gl.drawingBufferHeight, gl.COLOR_BUFFER_BIT, gl.NEAREST);
+    */
+    /*
+    gl.bindFramebuffer(gl.READ_FRAMEBUFFER, framebuffers[FRAMEBUFFER.RENDERBUFFER]);
+    gl.bindFramebuffer(gl.DRAW_FRAMEBUFFER, framebuffers[FRAMEBUFFER.COLORBUFFER]);
+    gl.clearBufferfv(gl.COLOR, 0, [0.0, 0.0, 0.0, 1.0]);
+    gl.blitFramebuffer(0, 0, FRAMEBUFFER_SIZE.x, FRAMEBUFFER_SIZE.y, 0, 0, FRAMEBUFFER_SIZE.x, FRAMEBUFFER_SIZE.y,gl.COLOR_BUFFER_BIT, gl.NEAREST);	
+    */
+    
+    shader.useProgram();
+    
+    gl.enableVertexAttribArray(this.shader.position);
+    gl.bindBuffer(gl.ARRAY_BUFFER, this.position.glId);
+    gl.vertexAttribPointer(this.shader.position, 3, gl.FLOAT, false, 0, 0);
+    
+    gl.activeTexture(gl.TEXTURE0);
+    gl.bindTexture(gl.TEXTURE_2D, this.colorTexture);
+    gl.uniform1i(this.shader.color, 0);
+    gl.activeTexture(gl.TEXTURE1);
+    gl.bindTexture(gl.TEXTURE_2D, this.colorTexture);
+    gl.uniform1i(this.shader.depth, 1);
+
+    gl.drawArrays(gl.TRIANGLES, 0, 6);
+    
+    gl.disableVertexAttribArray(this.shader.position);
+
+}
+
+GL.FrameBuffer.prototype.resize = function ()
+{
+    gl.bindTexture(gl.TEXTURE_2D, this.colorTexture);
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.drawingBufferWidth, gl.drawingBufferHeight, 0, gl.RGBA, gl.UNSIGNED_BYTE, null);
+    gl.bindTexture(gl.TEXTURE_2D, null);
+    
+    gl.bindTexture(gl.TEXTURE_2D, this.depthTexture);
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.DEPTH_COMPONENT24, gl.drawingBufferWidth, gl.drawingBufferHeight, 0, gl.DEPTH_COMPONENT, gl.UNSIGNED_INT, null);
+    gl.bindTexture(gl.TEXTURE_2D, null);
+}
 
 
 

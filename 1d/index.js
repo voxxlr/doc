@@ -92,7 +92,7 @@ V1.Camera = class extends GM.CameraMVP
 };
 
 
-V1.Controller = class extends V.Controller 
+V1.Controller = class extends V.CameraController 
 {
     constructor()
     {
@@ -121,7 +121,7 @@ V1.Controller = class extends V.Controller
         });
     }
     
-    rotateFn()
+    rotateFn(event)
     {
         var dx = (this.currPos.x - this.startPos.x)/4;
         var dy = (this.currPos.y - this.startPos.y)/2;
@@ -133,7 +133,7 @@ V1.Controller = class extends V.Controller
         this.camera.rotation.z = 0;
     }
 
-    zoomFn0()
+    zoomFn0(ctr)
     {
         this.camera.projection.fovH = this.fov0 + (this.fov1 - this.fov0)*Easing.Sinusoidal.InOut(this.rotation.sT);
     }
@@ -148,7 +148,7 @@ V1.Controller = class extends V.Controller
         }
         else
         {
-            ctr.actionFn = null;
+             this.updateFn = null;
         }
     }
 
@@ -158,19 +158,19 @@ V1.Controller = class extends V.Controller
 
         this.fov1 += this.getWheelDelta(event);
         this.fov1 = GM.clamp(this.fov1, this.minFov, this.maxFov);
-        this.actionFn = this.zoomFn1;
+        this.updateFn = this.zoomFn1;
     }        
 
     onMouseDown(event) 
     {
         super.onMouseDown(event);
-        this.actionFn = this.rotateFn.bind(this);
+        this.updateFn = this.rotateFn;
     }
         
     onTouchStart(event) 
     {
         super.onTouchStart(event);
-        this.actionFn =  this.rotateFn.bind(this);
+        this.updateFn =  this.rotateFn;
     }	
 }
 

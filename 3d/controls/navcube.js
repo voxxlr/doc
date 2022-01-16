@@ -1,9 +1,10 @@
 
 V3.NavCube = class extends V.EventHandler 
 {
-    constructor()
+    constructor(controller)
     {
         super(V.EventHandler.PRIO1);
+        this.controller = controller;
         
         this.camera = new GM.CameraMVP({ width: V3.NavCube.VIEWPORT, height: V3.NavCube.VIEWPORT}, new GM.PerspectiveProjection(30));
         
@@ -150,7 +151,7 @@ V3.NavCube = class extends V.EventHandler
     {
         if (V.camera.stopping)
         {
-            this.onMouseMove(V.Controller.pointerPosition);
+            this.onMouseMove(this.controller.pointerPosition);
         }
     }
 
@@ -165,7 +166,7 @@ V3.NavCube = class extends V.EventHandler
                 {
                     var face = this.rotZone[this.activeFace[0]];
                     var zone = face[this.activeZone[0]];
-                    V3.Controller.instance.onNavCube({x:this.rX[zone], y:this.rY[zone], z:0 });
+                    this.controller.onNavCube({x:this.rX[zone], y:this.rY[zone], z:0 });
                     event.stopImmediatePropagation();
                 }
             }
@@ -480,69 +481,6 @@ void main()
 
 
 
-
-
-
-
-
-
-
-V3.NavCube.get = ()=>
-{
-    if (!V3.NavCube.instance)
-    {
-        V3.NavCube.instance = new V3.NavCube(); 	
-    }
-    return V3.NavCube.instance;
-}
-
-
-V3.NavCube.toJson = (args) =>
-{
-    delete args.navcube;
-    if (V3.NavCube.instance)
-    {
-        if (V3.NavCube.instance.isAttached())
-        {
-             args.navcube =  {};
-        }
-    }
-}
-
-V.recvMessage("viewpoint", (viewpoint) => 
-{ 
-    if (viewpoint.navcube)
-    {
-        let navcube = V3.NavCube.get();
-        navcube.show(true);
-        V.postMessage("navcube", navcube.toJson() );
-    }
-    else if (V3.NavCube.instance)
-    {
-        V3.NavCube.instance.show(false);
-        V.postMessage("navcube", V3.NavCube.instance.toJson() );
-    }
-});
-
-V.recvMessage("navcube.get", () =>
-{
-    let navcube = V3.NavCube.get();
-    V.postMessage("navcube.get", navcube.toJson());
-});
-
-
-V.recvMessage("navcube", (config) =>
-{
-    let navcube = V3.NavCube.get();
-    
-    if (typeof config.visible != "undefined")
-    {
-        navcube.show(config.visible);
-    }
-    
-    V.touch3d();
-    V.postMessage("navcube", config);
-});
 
 
 

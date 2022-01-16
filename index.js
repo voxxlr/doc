@@ -866,7 +866,7 @@ V.Dataset.IMAGE = "image"
 // Camera Controller
 //
 
-V.Controller = class extends V.EventHandler 
+V.CameraController = class extends V.EventHandler 
 {
     constructor(sysPrio, appPrio, camera, dragMax)
     {
@@ -875,10 +875,19 @@ V.Controller = class extends V.EventHandler
         this.name = name;
         this.camera = camera;
         
-     //   this.startPos = { x:0, y:0 };
+        // mouse I/O
         this.currPos  = { x:0, y:0 };
         this.currZoom = 0;
-        
+
+        // ray casting
+        this.pointerPosition = { pageX: 0, pageY: 0 };
+        this.pointerRay = new GM.Ray();
+        this.pointerAge = 0;
+        this.cast3d = { distance: Number.POSITIVE_INFINITY };
+
+        // tweening        
+        this.ray = new GM.Ray();
+
         this.q0 = new GM.Quaternion();
         this.qN = new GM.Quaternion();
         this.qR = new GM.Quaternion();
@@ -891,7 +900,7 @@ V.Controller = class extends V.EventHandler
         this.shiftKey = false;
         
         this.tn = 0;
-        this.keys = [];
+        this.keys = {};
         
         this.position = {
             sT: 1,
@@ -905,8 +914,6 @@ V.Controller = class extends V.EventHandler
             q1 : new GM.Quaternion(),
             qR : new GM.Quaternion(),
         };
-        
-        this.ray = new GM.Ray();
         
         this.tweenR = 400;
         this.tweenT = 400;
@@ -932,10 +939,10 @@ V.Controller = class extends V.EventHandler
         this.rotation.sT = 0;
     }
 
-    tweenStart(actionFn)
+    tweenStart(updateFn)
     {
         this.t0 = V.time;
-        this.actionFn = actionFn;
+        this.updateFn = updateFn;
         this.drag = 0;
     }
     
@@ -943,13 +950,12 @@ V.Controller = class extends V.EventHandler
     {
         this.position.sT = 1;
         this.position.sT = 1;
-        this.actionFn = null;
+        this.updateFn = null;
         this.drag = 0;
     }
 
     onUpdate(event) 
     {
-        
         if (this.position.sT < 1.0 || this.rotation.sT < 1.0)
         {
             if (this.position.sT < 1.0)
@@ -975,25 +981,25 @@ V.Controller = class extends V.EventHandler
             
             this.camera.moving = true;
             
-            if (this.actionFn)
+            if (this.updateFn)
             {
-                this.actionFn.call(this, this);
+                this.updateFn.call(this, this, event);
             
                 if (this.position.sT == 1.0 && this.rotation.sT == 1.0)
                 {
-                    this.actionFn = null;
+                    this.updateFn = null;
                 }			
             }
         }
-        else if (this.actionFn)
+        else if (this.updateFn)
         {
-            this.actionFn.call(this, this);
+            this.updateFn.call(this, this, event);
 
             if (this.drag)
             {
                 if (this.drag-- == 1)
                 {
-                    this.actionFn = null;
+                    this.updateFn = null;
                 }
             }
             
@@ -1002,8 +1008,8 @@ V.Controller = class extends V.EventHandler
 
         if (V.camera.stopping)
         {
-            V.camera.getRay(V.Controller.pointerPosition, V.Controller.pointerRay);
-            V.postMessage("viewer.mousemove", this.cast3d());
+            V.camera.getRay(this.pointerPosition, this.pointerRay);
+            V.postMessage("viewer.mousemove", this.castRay3d());
         }
     }
 
@@ -1023,7 +1029,7 @@ V.Controller = class extends V.EventHandler
 
     onMouseWheel(event) 
     {
-        this.currPos = this.camera.screenToCamera(V.Controller.pointerPosition);
+        this.currPos = this.camera.screenToCamera(this.pointerPosition);
         this.currZoomD = this.getWheelDelta(event);
         this.currZoom -= this.currZoomD;
         this.currZoom = Math.min(Math.max(-1.0, this.currZoom), 1.0);
@@ -1032,11 +1038,11 @@ V.Controller = class extends V.EventHandler
 
     onMouseDown(event) 
     {
-        this.startPos = this.camera.screenToCamera(V.Controller.pointerPosition);
+        this.startPos = this.camera.screenToCamera(this.pointerPosition);
         this.currPos.x = this.startPos.x;
         this.currPos.y = this.startPos.y;             
         this.drag = 0;
-        V.postMessage('viewer.mousedown', V.Controller.cast3d);
+        V.postMessage('viewer.mousedown', this.cast3d);
     };
     
     onTouchStart(event) 
@@ -1045,13 +1051,13 @@ V.Controller = class extends V.EventHandler
     
         if (touches.length == 1)
         {
-            V.Controller.pointerPosition =  { pageX: touches[0].pageX , pageY: touches[0].pageY };
+            this.pointerPosition =  { pageX: touches[0].pageX , pageY: touches[0].pageY };
             this.onMouseDown({ pageX:  touches[0].pageX , pageY:  touches[0].pageY, button: 0 })
 
-            V.camera.getRay(V.Controller.pointerPosition, V.Controller.pointerRay);
-            this.cast2d = O.instance.raycast(V.Controller.pointerRay, V.Controller.pointerPosition);
+            V.camera.getRay(this.pointerPosition, this.pointerRay);
+            this.cast2d = O.instance.raycast(this.pointerRay, this.pointerPosition);
             
-            V.postMessage("viewer.mousemove", this.cast3d());
+            V.postMessage("viewer.mousemove", this.castRay3d());
     
             this.touchStamp = V.time;		    
             this.touchLast = touches[0];
@@ -1061,14 +1067,13 @@ V.Controller = class extends V.EventHandler
             // zoom
         }
     };
-    
 
     onMouseMove(event) 
     {
         this.currPos = this.camera.screenToCamera(event);
         this.shiftKey = event.shiftKey;
 
-        V.Controller.pointerPosition =  { pageX: event.pageX , pageY: event.pageY };
+        this.pointerPosition =  { pageX: event.pageX , pageY: event.pageY };
         
         if (this._timer == null && !V.camera.moving)
         {
@@ -1076,12 +1081,12 @@ V.Controller = class extends V.EventHandler
             {
                 if (this._timer != null)
                 {
-                    V.postMessage("viewer.mousemove", this.cast3d());
+                    V.postMessage("viewer.mousemove", this.castRay3d());
                 }
             }, 150);
         }    	
         
-        V.camera.getRay(V.Controller.pointerPosition, V.Controller.pointerRay);
+        V.camera.getRay(this.pointerPosition, this.pointerRay);
     };
     
     onTouchMove(event) 
@@ -1105,7 +1110,7 @@ V.Controller = class extends V.EventHandler
     onMouseOut(event) 
     {
         this.currZoom = 0;
-        this.actionFn = null;
+        this.updateFn = null;
     };
 
     onClick(event)
@@ -1128,8 +1133,8 @@ V.Controller = class extends V.EventHandler
 
     onDblClick(event)
     {
-        V.camera.getRay(V.Controller.pointerPosition, V.Controller.pointerRay);
-        this.cast3d();
+        V.camera.getRay(this.pointerPosition, this.pointerRay);
+        this.castRay3d();
         
         event.ray = this.ray;
         if (this.cast2d.hits.length > 0)
@@ -1138,14 +1143,14 @@ V.Controller = class extends V.EventHandler
             V.postMessage(next.type+".dblclick", next.DBLCLICK({ id: next.id, type: next.type, pageX: event.pageX, pageY: event.pageY }));	
             return true;
         }
-        V.postMessage("viewer.dblclick", V.Controller.cast3d);
+        V.postMessage("viewer.dblclick", this.cast3d);
         return false;
     }
         
     onTouchEnd(event) 
     {
         var touches = event.targetTouches;
-        console.log("onTouchEnd", touches);
+        
         if (touches.length == 0)
         {
             event.pageX = this.touchLast.pageX;
@@ -1163,21 +1168,11 @@ V.Controller = class extends V.EventHandler
         return false;
     };
 
-    
-    // Keys
-    setAction(action, dx, dy, dz) 
-    {
-        this.startPos.x = 0;
-        this.startPos.y = 0;                    
-        this.currPos.x = dx != undefined ? dx : 0;
-        this.currPos.y = dy != undefined ? dy : 0;    
-        this.currZoom = dz != undefined ? dz : 0;
-        this.actionFn = action;
-    }
-
+  
     onKeyDown(event) 
     {
         this.drag = 0;
+        this.keys[event.keyCode] = true;
     }
 
     onKeyUp(event) 
@@ -1186,6 +1181,9 @@ V.Controller = class extends V.EventHandler
         {
             this.drag = this.dragMax;
         }
+        delete this.keys[event.keyCode];
+        this.startPos.x = this.currPos.x;
+        this.startPos.y = this.currPos.y;
     }
 
 
@@ -1194,27 +1192,20 @@ V.Controller = class extends V.EventHandler
     //	console.log("onTouchCancel");
     };
     
-    cast3d()
+    castRay3d()
     {
-        let cast = V.viewer.raycast(V.Controller.pointerRay, { xyz: {}, normal: {}, distance: Number.POSITIVE_INFINITY });
+        let cast = V.viewer.raycast(this.pointerRay, { xyz: {}, normal: {}, distance: Number.POSITIVE_INFINITY });
         if (cast.distance != Number.POSITIVE_INFINITY)
         {
             GM.Vector3.normalize(cast.normal, cast.normal);
         }		
-        V.Controller.cast3d = cast;
-        V.Controller.pointerAge = V.time;
+        this.cast3d = cast;
+        this.pointerAge = V.time;
         
         this._timer = null;
         return cast;
     }
 }
-
-
-V.Controller.pointerPosition = { pageX: 0, pageY: 0 };
-V.Controller.pointerRay = new GM.Ray();
-V.Controller.pointerAge = 0;
-V.Controller.cast3d = { distance: Number.POSITIVE_INFINITY };
-
 
 Easing = {
 

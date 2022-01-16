@@ -65,7 +65,7 @@ V3.Camera = class extends GM.CameraMVP
 
 
 
-V3.Controller = class extends V.Controller
+V3.Controller = class extends V.CameraController
 {
     constructor()
     {
@@ -77,24 +77,9 @@ V3.Controller = class extends V.Controller
         this.controllers["flyer"] = new V3.Flyer(V.camera);
         this.controllers["walker"] = new V3.Walker(V.camera);
         this.controllers["manual"] = new V3.Manual(V.camera);
-        
-        /*
-        if (('ontouchstart' in window && mode == V3.VIEWER)) 
-        {
-            let panControl = document.getElementById("panel-touch-pan");
-            panControl.hidden = false;
-            this.touchControl(panControl.querySelector("svg:nth-of-type(1)"), V.KEY_UP);
-            this.touchControl(panControl.querySelector("svg:nth-of-type(2)"), V.KEY_A);
-            this.touchControl(panControl.querySelector("svg:nth-of-type(3)"), V.KEY_D);
-            this.touchControl(panControl.querySelector("svg:nth-of-type(4)"), V.KEY_DOWN);
-            
-            let zoomControl = document.getElementById("panel-touch-zoom");
-            zoomControl.hidden = false;
-            this.touchControl(zoomControl.querySelector("svg:nth-of-type(1)"), V.KEY_W);
-            this.touchControl(zoomControl.querySelector("svg:nth-of-type(2)"), V.KEY_S);
-        }
-        */
-            
+
+        this.cast3d = { distance: Number.POSITIVE_INFINITY };
+             
         V.recvMessage("controller.view", (args) =>
         {
             let aabb = args.aabb
@@ -176,8 +161,6 @@ V3.Controller = class extends V.Controller
         { 
             if (viewpoint.controller)
             {
-                let current = this.active;
-                
                 if (this.active != this.controllers[viewpoint.controller.name])
                 {
                     this.active = this.controllers[viewpoint.controller.name];
@@ -194,6 +177,26 @@ V3.Controller = class extends V.Controller
             {
                 this.active = null;
             }
+
+            if (viewpoint.navcube)
+            {
+                if (!this.navCube)
+                {
+                    this.navCube = new V3.NavCube(this);
+                    this.navCube.show(true);
+                }
+                V.postMessage("navcube", this.navCube.toJson() );
+            }
+
+            if (viewpoint.target) 
+            {
+                if (!this.target)
+                {
+                    this.target = new V3.Target(this);
+                }
+                this.target.fromJson(viewpoint.target);
+                V.postMessage("target", this.target.toJson());
+            }
             
             V.camera.projection.set(viewpoint.camera.projection);
             
@@ -208,14 +211,65 @@ V3.Controller = class extends V.Controller
             if (this.active)
             {
                 args.controller = this.active.toJson();
+                if (this.navCube)
+                {
+                    args.navCube = this.navCube.toJson();
+                }
+                if (this.target)
+                {
+                    args.target = this.target.toJson();
+                }
+            }
+        });
+
+
+
+        V.recvMessage("navcube", (config) =>
+        {
+            if (!this.navCube)
+            {
+                this.navCube = new V3.NavCube(this);
+                this.navCube.show(true);
+            }
+            
+            if (config.hasOwnProperty("visible"))
+            {
+                this.navCube.show(config.visible);
+            }
+            
+            V.touch3d();
+            V.postMessage("navcube", config);
+        });
+        
+        
+        
+        V.recvMessage("target", (config) =>
+        {
+            if (!this.target)
+            {
+                this.target = new V3.Target(this);
+            }
+            this.target.fromJson(config);
+            V.touch3d();
+            V.postMessage("target", this.target.toJson());
+        });
+        
+        V.recvMessage("target.get", () =>
+        {
+            if (!this.target)
+            {
+                V.postMessage("target.get", this.target.toJson());
+            }
+            else
+            {
+                V.postMessage("target.get", {});
             }
         });
     }
     
-    
     load()
     {
-        let center = GL.BoundingBox.center(V.viewer.aabb, {});
+        let center = GL.BoundingBox.center(V.viewer.aabb);
         let distance = GL.BoundingBox.diagonal(V.viewer.aabb);
 
         GM.Euler.copy(V3.Controller.rotation, V.camera.rotation)
@@ -240,11 +294,9 @@ V3.Controller = class extends V.Controller
     {
         if (!super.onDblClick(event))
         {
-            let cast3d = V.Controller.cast3d;
-        //	console.log(cast3d.distance);
-            if (cast3d.distance != Number.POSITIVE_INFINITY)
+            if (this.cast3d.distance != Number.POSITIVE_INFINITY)
             {
-                V.postMessage(V.viewer.datasets[cast3d.id].type+".dblclick",cast3d);
+                V.postMessage(V.viewer.datasets[this.cast3d.id].type+".dblclick",this.cast3d);
             }
         }
         event.stopImmediatePropagation();
@@ -354,7 +406,6 @@ V3.Controller = class extends V.Controller
 V3.Controller.rotation = GM.Euler.create(-Math.PI/8, 0, 0);
 
 
-V.Controller.cast3d = { distance: Number.POSITIVE_INFINITY };
 
 
 
@@ -371,7 +422,7 @@ V3.Orbiter = class
         this.rotation = GM.Euler.copy(V3.Controller.rotation, {})
         this.matrix = GM.Matrix4.create();
             
-        this.zoomFn = (ctr) =>
+        this.zoomFn = (ctr, event) =>
         {
             let dO = 0;
             if (Math.abs(this.targetOrbit - this.orbit) > 0.1)
@@ -381,7 +432,7 @@ V3.Orbiter = class
             else
             {
                 dO = this.targetOrbit - this.orbit;
-                ctr.actionFn = null;
+                ctr.updateFn = null;
             }
             this.orbit += dO;
             GM.Vector3.addScalar(this.camera.position, this.camera.zAxis, dO, this.camera.position);
@@ -389,8 +440,32 @@ V3.Orbiter = class
         
         this.panFn = (ctr) =>
         {
-            let dx = (ctr.currPos.x - ctr.startPos.x)/ctr.dragMax;
-            let dy = (ctr.currPos.y - ctr.startPos.y)/ctr.dragMax;
+            let dx = 0;
+            let dy = 0;
+            if (ctr.keys[V.KEY_A])
+            {
+                dx = 0.05;
+            }
+            else if (ctr.keys[V.KEY_D])
+            {
+                dx = -0.05;
+            }
+            else if (ctr.keys[V.KEY_UP])
+            {
+                dy = -0.05;
+            }
+            else if (ctr.keys[V.KEY_DOWN])
+            {
+                dy = 0.05;
+            }
+            else
+            {
+                dx = (ctr.currPos.x - ctr.startPos.x);
+                dy = (ctr.currPos.y - ctr.startPos.y);
+            }
+                        
+            dx /= ctr.dragMax;
+            dy /= ctr.dragMax;
             ctr.startPos.x += dx;
             ctr.startPos.y += dy;
             
@@ -399,16 +474,31 @@ V3.Orbiter = class
             this.camera.position.z -= this.orbit*(this.camera.xAxis.z*dx + this.camera.yAxis.z*dy);
         }
 
-
         this.rotateFn = (ctr) =>
         {
-            let target = GM.Vector3.addScalar(this.camera.position, this.camera.zAxis, -this.orbit, {});
+            let dx = 0;
+            let dy = 0;
+            if (ctr.keys[V.KEY_LEFT])
+            {
+                dx = -0.1;
+            }
+            else if (ctr.keys[V.KEY_RIGHT])
+            {
+                dx = 0.1;
+            }
+            else
+            {
+                dx = ctr.currPos.x - ctr.startPos.x;
+                dy = ctr.currPos.y - ctr.startPos.y;
+            }
 
-            let dx = (ctr.currPos.x - ctr.startPos.x)/ctr.dragMax;
-            let dy = (ctr.currPos.y - ctr.startPos.y)/ctr.dragMax;
+            dx /= ctr.dragMax;
+            dy /= ctr.dragMax;
             ctr.startPos.x += dx;
             ctr.startPos.y += dy;
-            
+
+            let target = GM.Vector3.addScalar(this.camera.position, this.camera.zAxis, -this.orbit, {});
+
             GM.Matrix4.multiply(this.inverseUP, this.camera.matrix, this.matrix);
             GM.Euler.fromMatrix(this.matrix, this.rotation);
             
@@ -420,31 +510,6 @@ V3.Orbiter = class
             GM.Matrix4.multiply(this.matrixUP, this.matrix, this.matrix);
             
             GM.Euler.fromMatrix(this.matrix, this.camera.rotation);
-
-            /*			
-            let dx = (ctr.currPos.x - ctr.startPos.x)/ctr.dragMax;
-            let dy = (ctr.currPos.y - ctr.startPos.y)/ctr.dragMax;
-            ctr.startPos.x += dx;
-            ctr.startPos.y += dy;
-
-            this.camera.rotation.x = GM.clamp(this.camera.rotation.x+dy, -1.57079632679,1.57079632679);
-            this.camera.rotation.y = this.camera.rotation.y-4*dx;
-            this.camera.rotation.z = 0;
-            */
-        
-            /*
-            let dx = (ctr.currPos.x - ctr.startPos.x)/ctr.dragMax;
-            let dy = (ctr.currPos.y - ctr.startPos.y)/ctr.dragMax;
-            ctr.startPos.x += dx;
-            ctr.startPos.y += dy;
-
-            this.rotation.x = GM.clamp(this.rotation.x+dy, -1.57079632679,1.57079632679);
-            this.rotation.y = this.rotation.y-4*dx;
-            GM.Matrix4.fromEuler(this.rotation, this.matrix);
-            GM.Matrix4.multiply(this.matrixUP, this.matrix, this.matrix);
-            GM.Euler.fromMatrix(this.matrix, this.camera.rotation);
-            */
-            
             
             let zAxisT = GM.Euler.zAxisT(this.camera.rotation, {});
             GM.Vector3.addScalar(target, zAxisT, this.orbit, this.camera.position);
@@ -475,7 +540,7 @@ V3.Orbiter = class
                 let orbit = GL.BoundingBox.diagonal(aabb);
                 if (isFinite(orbit))
                 {
-                    config.position = GM.Vector3.addScalar(GL.BoundingBox.center(aabb, {}), this.camera.zAxis, orbit, {});
+                    config.position = GM.Vector3.addScalar(GL.BoundingBox.center(aabb), this.camera.zAxis, orbit, {});
                     this.orbit = orbit;
                 }
             }
@@ -512,7 +577,7 @@ V3.Orbiter = class
         let orbit = GL.BoundingBox.diagonal(aabb);
         if (isFinite(orbit))
         {
-            let point = GL.BoundingBox.center(aabb, {});
+            let point = GL.BoundingBox.center(aabb);
             
             this.orbit = orbit;
             ctr.tweenPosition(GM.Vector3.addScalar(point, this.camera.zAxis, orbit, {}));
@@ -547,11 +612,11 @@ V3.Orbiter = class
         ctr.tweenStop();
         if (event.button == 0)
         {
-            ctr.actionFn = this.rotateFn;
+            ctr.updateFn = this.rotateFn;
         }
         else if (event.button == 2)
         {
-            ctr.actionFn = this.panFn;
+            ctr.updateFn = this.panFn;
         }
     }
 
@@ -561,47 +626,41 @@ V3.Orbiter = class
         
         this.targetOrbit = Math.max(1.1*this.minOrbit, this.orbit + 4*ctr.currZoomD*(this.orbit -  this.minOrbit));
         
-        ctr.actionFn = this.zoomFn;
+        ctr.updateFn = this.zoomFn;
     }   
 
     keyDown(event, ctr) 
     {
         ctr.tweenStop();
-        if (event.keyCode == V.KEY_W)
+
+        switch (event.keyCode)
         {
-            this.targetOrbit = Math.max(this.minOrbit, 0.85*this.orbit);
-            
-            ctr.actionFn = this.zoomFn;
-        }
-        else if (event.keyCode == V.KEY_S)
-        {
-            this.targetOrbit += Math.max(0.5, 0.1*(this.orbit -  this.minOrbit));
-            
-            ctr.actionFn = this.zoomFn;
-        } 
-        else if (event.keyCode == V.KEY_A)
-        {
-            ctr.setAction(this.panFn, 0.05, 0);
-        }
-        else if (event.keyCode == V.KEY_D)
-        {
-            ctr.setAction(this.panFn, -0.05, 0);
-        } 
-        else if (event.keyCode == V.KEY_LEFT)
-        {
-            ctr.setAction(this.rotateFn, -0.1, 0);
-        }
-        else if (event.keyCode == V.KEY_RIGHT)
-        {
-            ctr.setAction(this.rotateFn, 0.1, 0);
-        }
-        else if (event.keyCode == V.KEY_UP)
-        {
-            ctr.setAction(this.panFn, 0, -0.05);
-        }
-        else if (event.keyCode == V.KEY_DOWN)
-        {
-            ctr.setAction(this.panFn, 0, 0.05);
+            case V.KEY_W:
+            {
+                this.targetOrbit = Math.max(this.minOrbit, 0.85*this.orbit);
+                ctr.updateFn = this.zoomFn;
+                break;
+            }
+            case V.KEY_S:
+            {
+                this.targetOrbit += Math.max(0.5, 0.1*(this.orbit -  this.minOrbit));
+                ctr.updateFn = this.zoomFn;
+                break;
+            } 
+            case V.KEY_A:
+            case V.KEY_D:
+            case V.KEY_UP:
+            case V.KEY_DOWN:
+            {
+                ctr.updateFn = this.panFn;
+                break;
+            }
+            case V.KEY_LEFT:
+            case V.KEY_RIGHT:
+            {
+                ctr.updateFn = this.rotateFn;
+                break;
+            }
         }
     }
     
@@ -638,27 +697,51 @@ V3.Flyer = class
                     ctr.currZoom = 0.0;
                 }
                 
-                let flyDir = V.Controller.pointerRay.direction;
+                let flyDir = ctr.pointerRay.direction;
 
                 this.camera.position.x += distance * flyDir.x;
                 this.camera.position.y += distance * flyDir.y;
                 this.camera.position.z += distance * flyDir.z;
 
-                if (V.Controller.cast3d.distance != Number.POSITIVE_INFINITY)
+                if (ctr.cast3d.distance != Number.POSITIVE_INFINITY)
                 {
                     this.range = Math.max(0.4,this.range - distance);
                 }
             }
             else
             {
-                ctr.actionFn = null;
+                ctr.updateFn = null;
             }
         }
         
         this.panFn = (ctr) =>
         {
-            var dx = (ctr.currPos.x - ctr.startPos.x)/ctr.dragMax;
-            var dy = (ctr.currPos.y - ctr.startPos.y)/ctr.dragMax;
+            let dx = 0;
+            let dy = 0;
+            if (ctr.keys[V.KEY_A])
+            {
+                dx = 0.05;
+            }
+            else if (ctr.keys[V.KEY_D])
+            {
+                dx = -0.05;
+            }
+            else if (ctr.keys[V.KEY_UP])
+            {
+                dy = -0.05;
+            }
+            else if (ctr.keys[V.KEY_DOWN])
+            {
+                dy = 0.05;
+            }
+            else
+            {
+                dx = ctr.currPos.x - ctr.startPos.x;
+                dy = ctr.currPos.y - ctr.startPos.y;
+            }
+    
+            dx /= ctr.dragMax;
+            dy /= ctr.dragMax;	
             ctr.startPos.x += dx;
             ctr.startPos.y += dy;
             
@@ -669,8 +752,24 @@ V3.Flyer = class
         
         this.rotateFn = (ctr) =>
         {
-            var dx = (ctr.currPos.x - ctr.startPos.x)/ctr.dragMax;
-            var dy = (ctr.currPos.y - ctr.startPos.y)/ctr.dragMax;
+            let dx = 0;
+            let dy = 0;
+            if (ctr.keys[V.KEY_LEFT])
+            {
+                dx = -0.1;
+            }
+            else if (ctr.keys[V.KEY_RIGHT])
+            {
+                dx = 0.1;
+            }
+            else
+            {
+                dx = ctr.currPos.x - ctr.startPos.x;
+                dy = ctr.currPos.y - ctr.startPos.y;
+            }
+
+            dx /= ctr.dragMax;
+            dy /= ctr.dragMax;	
             ctr.startPos.x += dx;
             ctr.startPos.y += dy;
 
@@ -704,11 +803,11 @@ V3.Flyer = class
     
     update(ctr)
     {
-        if (!ctr.actionFn)
+        if (!ctr.updateFn)
         {
-            if (V.Controller.cast3d.distance != Number.POSITIVE_INFINITY)
+            if (ctr.cast3d.distance != Number.POSITIVE_INFINITY)
             {
-                this.range = V.Controller.cast3d.distance;
+                this.range = ctr.cast3d.distance;
             }
         }
     }
@@ -718,54 +817,46 @@ V3.Flyer = class
         ctr.tweenStop();
         if (event.button == 0)
         {
-            ctr.actionFn = this.rotateFn;
+            ctr.updateFn = this.rotateFn;
         }
         else if (event.button == 2)
         {
-            ctr.actionFn = this.panFn;
+            ctr.updateFn = this.panFn;
         }
     };
 
     mouseWheel(event, ctr) 
     {
         ctr.tweenStop();
-        ctr.actionFn = this.flyFn;
+        ctr.updateFn = this.flyFn;
     }      
 
     keyDown(event, ctr) 
     {
         ctr.tweenStop();
-        if (event.keyCode == V.KEY_W)
+
+        switch (event.keyCode)
         {
-            ctr.setAction(this.flyFn, 0, 0, 0.1);
-        }
-        else if (event.keyCode == V.KEY_S)
-        {
-            ctr.setAction(this.flyFn, 0, 0,-0.1);
-        } 
-        else if (event.keyCode == V.KEY_A)
-        {
-            ctr.setAction(this.panFn, 0.05, 0);
-        }
-        else if (event.keyCode == V.KEY_D)
-        {
-            ctr.setAction(this.panFn, -0.05, 0);
-        } 
-        else if (event.keyCode == V.KEY_LEFT)
-        {
-            ctr.setAction(this.rotateFn, -0.1, 0);
-        }
-        else if (event.keyCode == V.KEY_RIGHT)
-        {
-            ctr.setAction(this.rotateFn, 0.1, 0);
-        }
-        else if (event.keyCode == V.KEY_UP)
-        {
-            ctr.setAction(this.panFn, 0, -0.05);
-        }
-        else if (event.keyCode == V.KEY_DOWN)
-        {
-            ctr.setAction(this.panFn, 0, 0.05);
+            case V.KEY_W:
+            case V.KEY_S:
+            {
+                ctr.updateFn = this.flyFn;
+                break;
+            }
+            case V.KEY_A:
+            case V.KEY_D:
+            case V.KEY_UP:
+            case V.KEY_DOWN:
+            {
+                ctr.updateFn = this.panFn;
+                break;
+            }
+            case V.KEY_LEFT:
+            case V.KEY_RIGHT:
+            {
+                ctr.updateFn = this.rotateFn;
+                break;
+            }
         }
     }
     
@@ -831,8 +922,24 @@ V3.Walker = class
         
         this.rotateFn = (ctr) =>
         {
-            var dx = (ctr.currPos.x - ctr.startPos.x)/ctr.dragMax;
-            var dy = (ctr.currPos.y - ctr.startPos.y)/ctr.dragMax;
+            let dx = 0;
+            let dy = 0;
+            if (ctr.keys[V.KEY_LEFT])
+            {
+                dx = -0.1;
+            }
+            else if (ctr.keys[V.KEY_RIGHT])
+            {
+                dx = 0.1;
+            }
+            else
+            {
+                dx = ctr.currPos.x - ctr.startPos.x;
+                dy = ctr.currPos.y - ctr.startPos.y;
+            }
+    
+            dx /= ctr.dragMax;
+            dy /= ctr.dragMax;	
             ctr.startPos.x += dx;
             ctr.startPos.y += dy;
 
@@ -843,8 +950,24 @@ V3.Walker = class
 
         this.panFn = (ctr) =>
         {
-            var dx = (ctr.currPos.x - ctr.startPos.x)/ctr.dragMax;
-            var dy = (ctr.currPos.y - ctr.startPos.y)/ctr.dragMax;
+            let dx = 0;
+            let dy = 0;
+            if (ctr.keys[V.KEY_LEFT])
+            {
+                dy = -0.1;
+            }
+            else if (ctr.keys[V.KEY_RIGHT])
+            {
+                dy = 0.1;
+            }
+            else
+            {
+                dx = ctr.currPos.x - ctr.startPos.x;
+                dy = ctr.currPos.y - ctr.startPos.y;
+            }
+    
+            dx /= ctr.dragMax;
+            dy /= ctr.dragMax;	
             ctr.startPos.x += dx;
             ctr.startPos.y += dy;
             
@@ -888,11 +1011,11 @@ V3.Walker = class
         ctr.tweenStop();
         if (event.button == 0)
         {
-            ctr.actionFn = this.rotateFn;
+            ctr.updateFn = this.rotateFn;
         }
         else if (event.button == 2)
         {
-            ctr.actionFn = this.panFn;
+            ctr.updateFn = this.panFn;
         }
     };
     
@@ -905,37 +1028,29 @@ V3.Walker = class
     keyDown(event, ctr) 
     {
         ctr.tweenStop();
-        if (event.keyCode == V.KEY_W)
+
+        switch (event.keyCode)
         {
-            ctr.actionFn = this.walkFn;
-        }
-        else if (event.keyCode == V.KEY_S)
-        {
-            ctr.actionFn = this.walkFn;
-        } 
-        else if (event.keyCode == V.KEY_A)
-        {
-            ctr.actionFn = this.walkFn;
-        }
-        else if (event.keyCode == V.KEY_D)
-        {
-            ctr.actionFn = this.walkFn;
-        } 
-        else if (event.keyCode == V.KEY_LEFT)
-        {
-            ctr.setAction(this.rotateFn, -0.1, 0);
-        }
-        else if (event.keyCode == V.KEY_RIGHT)
-        {
-            ctr.setAction(this.rotateFn, 0.1, 0);
-        }
-        else if (event.keyCode == V.KEY_UP)
-        {
-            ctr.setAction(this.panFn, 0, -0.05);
-        }
-        else if (event.keyCode == V.KEY_DOWN)
-        {
-            ctr.setAction(this.panFn, 0, 0.05);
+            case V.KEY_W:
+            case V.KEY_S:
+            case V.KEY_A:
+            case V.KEY_D:
+            {
+                ctr.updateFn = this.walkFn;
+                break;
+            }
+            case V.KEY_UP:
+            case V.KEY_DOWN:
+            {
+                ctr.updateFn = this.panFn;
+                break;
+            }
+            case V.KEY_LEFT:
+            case V.KEY_RIGHT:
+            {
+                ctr.updateFn = this.rotateFn;
+                break;
+            }
         }
     }
     

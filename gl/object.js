@@ -39,19 +39,21 @@ GL.Axis.prototype.render = function (camera)
 GL.Axis.prototype.update = function ()
 {
     this.position = new GL.ArrayBuffer(new Float32Array([
-        this.px, this.py, this.pz,  this.px+this.sx, this.py, this.pz,
-        this.px, this.py, this.pz,  this.px, this.py+this.sy, this.pz,
-        this.px, this.py, this.pz,  this.px, this.py, this.pz+this.sz
+        this.px, this.py, this.pz,  this.px+ this.sx,  this.py, this.pz,
+        this.px, this.py, this.pz,  this.px, this.py + this.sy, this.pz,
+        this.px, this.py, this.pz,  this.px, this.py,  this.pz+this.sz
     ]));
 }
 
-GL.Axis.prototype.resize = function (aabb)
+GL.Axis.prototype.resize = function (aabb, camera)
 {
-    this.sx = aabb.max.x - aabb.min.x;
-    this.sy = aabb.max.y - aabb.min.y;
-    this.sz = aabb.max.z - aabb.min.z;
+    let range = 0.25*GM.Vector3.mag(GM.Vector3.sub3V(this.px,this.py,this.pz, camera.position));
+    this.sx = Math.min(range, aabb.max.x - aabb.min.x);
+    this.sy = Math.min(range, aabb.max.y - aabb.min.y);
+    this.sz = Math.min(range, aabb.max.z - aabb.min.z);
     this.update();
 }
+
 
 GL.Axis.prototype.moveTo = function (x,y,z)
 {
@@ -222,6 +224,7 @@ GL.BoundingBox = class
     
     static center(aabb, dest)
     {
+        dest = dest || {};
         dest.x = (aabb.min.x + aabb.max.x)/2;
         dest.y = (aabb.min.y + aabb.max.y)/2;
         dest.z = (aabb.min.z + aabb.max.z)/2;

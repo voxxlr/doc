@@ -39,8 +39,9 @@ GL.FrameBuffer = function FrameBuffer(shader)
                                                       1.0,  1.0, 0.0
                                                      ]));
 
-    this.shader = shader;
-    this.shader.compile();
+
+    //this.shader = shader;
+    //this.shader.compile();
     
 }
 
@@ -54,9 +55,7 @@ GL.FrameBuffer.prototype.render = function ()
     gl.blitFramebuffer(0, 0, FRAMEBUFFER_SIZE.x, FRAMEBUFFER_SIZE.y, 0, 0, FRAMEBUFFER_SIZE.x, FRAMEBUFFER_SIZE.y,gl.COLOR_BUFFER_BIT, gl.NEAREST);	
     */
     this.shader.useProgram();
-    
-    var position = this.shader.attributes["position"];
-    
+     
     gl.enableVertexAttribArray(this.shader.position);
     gl.bindBuffer(gl.ARRAY_BUFFER, this.position.glId);
     gl.vertexAttribPointer(this.shader.position, 3, gl.FLOAT, false, 0, 0);

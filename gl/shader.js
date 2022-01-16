@@ -288,3 +288,45 @@ void main()
     //gl_FragColor = vec4(1,1,1, 1);
 }`
 
+
+
+
+/** @constructor */
+GL.CopyShader = function()
+{
+    GL.Shader.call(this, GL.CopyShader["vs"], GL.CopyShader["fs"]);
+}
+
+GL.CopyShader.prototype = Object.create(GL.ShaderMVP.prototype);
+GL.CopyShader.prototype.constructor = GL.CopyShader;
+
+GL.CopyShader.prototype.compile  = function()
+{
+    GL.ShaderMVP.prototype.compile.call(this);
+
+    this.defineAttribute("position", 3, gl.FLOAT, false);
+    this.defineAttribute("color", 3, gl.UNSIGNED_BYTE, true);
+}
+
+GL.CopyShader["vs"] = `
+attribute vec3 position;
+
+void main()	
+{
+    gl_Position = position;
+}
+`
+
+GL.CopyShader["fs"] = `
+precision mediump float;
+precision mediump int;
+
+varying vec3 vColor;
+
+void main()	
+{
+    gl_FragColor = vec4(vColor, 1);
+    //gl_FragColor = vec4(1,1,1, 1);
+}`
+
+

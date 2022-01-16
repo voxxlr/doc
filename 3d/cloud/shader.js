@@ -113,7 +113,6 @@ uniform float ortho;
 attribute vec3 position;
 
 varying vec4 pixelColor;
-varying vec3 viewPosition;
 varying vec3 worldPosition;
 varying float discarded;
 
@@ -217,10 +216,6 @@ void main()
     
     pixelColor = vec4(vertexColor, alpha);
     worldPosition = position.xyz;
-    
-    #if defined(HIGH_QUALITY)
-        viewPosition = viewVertex.xyz;
-    #endif	
 }
 `
 
@@ -275,6 +270,12 @@ void main()
         }
     }
 #endif
+
+    vec2 coord = 2.0 * gl_PointCoord - 1.0;
+    if (dot(coord, coord) > 1.0)
+    {
+        discard;
+    }
 
     gl_FragColor = pixelColor;
 }

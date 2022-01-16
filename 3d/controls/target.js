@@ -68,9 +68,11 @@ void main()
 
 V3.Target = class extends V.EventHandler
 {
-    constructor()
+    constructor(controller)
     {
         super(V.EventHandler.PRIO1);
+
+        this.controller = controller;
         
         this.position = new GL.ArrayBuffer(new Float32Array([ -0.5, 0, 0.5, 
                                                                0.5, 0, 0.5, 
@@ -114,13 +116,13 @@ V3.Target = class extends V.EventHandler
     {
         if (this.mode === "auto")
         {
-            if (V.Controller.pointerAge != this.pointerAge)
+            if (this.controller.pointerAge != this.pointerAge)
             {
-                let cast = V.Controller.cast3d;
+                let cast = this.controller.cast3d;
                 
                 if (cast.distance != Number.POSITIVE_INFINITY)
                 {
-                    this.setMatrix(V.Controller.pointerRay.at(cast.distance, {}), cast.normal);
+                    this.setMatrix(this.controller.pointerRay.at(cast.distance, {}), cast.normal);
                     
                     this.visible = true;
                 }
@@ -129,7 +131,7 @@ V3.Target = class extends V.EventHandler
                     this.visible = false;
                 }
             
-                this.pointerAge = V.Controller.pointerAge;
+                this.pointerAge = this.controller.pointerAge;
                 V.touch3d();
             }
         }
@@ -228,58 +230,3 @@ V3.Target = class extends V.EventHandler
 
 
 
-
-
-
-
-V3.Target.get = ()=>
-{
-    if (!V3.Target.instance)
-    {
-        V3.Target.instance = new V3.Target(); 	
-    }
-    return V3.Target.instance;
-}
-
-V3.Target.toJson = (args) =>
-{
-    delete args.target;
-    if (V3.Target.instance)
-    {
-        if (V3.Target.instance.isAttached())
-        {
-            args.target = V3.Target.instance.toJson();
-        }
-    }
-}
-
-
-
-V.recvMessage("viewpoint", (viewpoint) => 
-{ 
-    if (viewpoint.target) 
-    {
-        let target = V3.Target.get();
-        target.fromJson(viewpoint.target);
-        V.postMessage("target", target.toJson());
-    }
-    else if (V3.Target.instance)
-    {
-        V3.Target.instance.fromJson({ visible: false});
-        V.postMessage("target", V3.Target.instance.toJson());
-    }
-});
-
-V.recvMessage("target", (config) =>
-{
-    let target = V3.Target.get();
-    target.fromJson(config);
-    V.touch3d();
-    V.postMessage("target", target.toJson());
-});
-
-V.recvMessage("target.get", () =>
-{
-    let target = V3.Target.get();
-    V.postMessage("target.get", target.toJson());
-});
